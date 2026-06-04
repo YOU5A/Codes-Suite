@@ -1,0 +1,129 @@
+﻿import { useState, useEffect, useCallback } from "react";
+import { getCssTransitionValues, type AnimationSpeed } from "@/utils/animations";
+
+export type Theme = "light" | "dark" | "auto" | "graphite" | "midnight" | "ocean" | "emerald" | "crimson";
+
+export interface AppSettings {
+  windowOpacity: number;
+  borderRadius: number;
+  animationSpeed: "fast" | "normal" | "off";
+  rememberSize: boolean;
+  rememberPosition: boolean;
+  sidebarWidth: number;
+  fontScale: number;
+  compactMode: boolean;
+  theme: Theme;
+}
+
+const SETTINGS_KEY = "codes-suite-settings";
+const THEME_KEY = "codes-suite-theme";
+
+export const defaultSettings: AppSettings = {
+  windowOpacity: 100,
+  borderRadius: 20,
+  animationSpeed: "fast" as AnimationSpeed,
+  rememberSize: true,
+  rememberPosition: true,
+  sidebarWidth: 240,
+  fontScale: 120,
+  compactMode: false,
+  theme: "auto",
+};
+
+function getSystemTheme(): "light" | "dark" {
+  if (window.matchMedia?.("(prefers-color-scheme: dark)").matches) return "dark";
+  return "light";
+}
+
+function loadSettings(): AppSettings {
+  try {
+    const raw = localStorage.getItem(SETTINGS_KEY);
+    if (raw) return { ...defaultSettings, ...JSON.parse(raw) };
+  } catch {}
+  return { ...defaultSettings };
+}
+
+function saveSettings(s: AppSettings) {
+  localStorage.setItem(SETTINGS_KEY, JSON.stringify(s));
+}
+
+function resolveThemeToLightDark(theme: Theme): "light" | "dark" {
+  if (theme === "auto") return getSystemTheme();
+  if (["light", "graphite", "ocean", "emerald"].includes(theme)) return "light";
+  return "dark";
+}
+
+export function useTheme() {
+  const [settings, setSettingsState] = useState<AppSettings>(loadSettings);
+  const resolvedLightDark = resolveThemeToLightDark(settings.theme);
+
+
+  // Apply CSS variables (no background dep to avoid re-renders)
+  useEffect(() => {
+    const root = document.documentElement;
+    root.setAttribute("data-theme", resolvedLightDark);
+    root.setAttribute("data-theme-name", settings.theme);
+    root.style.setProperty("--radius", settings.borderRadius + "px");
+    root.style.setProperty("--window-opacity", String(settings.windowOpacity / 100));
+    root.style.setProperty("--sidebar-width", settings.sidebarWidth + "px");
+    root.style.setProperty("--font-scale", String(settings.fontScale / 100));
+    const tv = getCssTransitionValues(settings.animationSpeed);
+    root.style.setProperty("--transition-fast", tv.fast);
+    root.style.setProperty("--transition-normal", tv.normal);
+    root.style.setProperty("--transition-slow", tv.slow);
+  }, [settings]);
+
+  // System theme listener
+  useEffect(() => {
+    if (settings.theme !== "auto") return;
+    const mq = window.matchMedia("(prefers-color-scheme: dark)");
+    const handler = () => {
+      const t = getSystemTheme();
+      document.documentElement.setAttribute("data-theme", t);
+    };
+    mq.addEventListener("change", handler);
+    return () => mq.removeEventListener("change", handler);
+  }, [settings.theme]);
+
+
+  const setTheme = useCallback((theme: Theme) => {
+    setSettingsState(prev => {
+      const next = { ...prev, theme };
+      saveSettings(next);
+      return next;
+    });
+  }, []);
+
+  const updateSettings = useCallback((partial: Partial<AppSettings>) => {
+    setSettingsState(prev => {
+      const next = { ...prev, ...partial };
+      saveSettings(next);
+      return next;
+    });
+  }, []);
+
+  const resetSettings = useCallback(() => {
+    setSettingsState({ ...defaultSettings });
+    saveSettings({ ...defaultSettings });
+  }, []);
+
+  const toggleTheme = useCallback(() => {
+    setSettingsState(prev => {
+      const themes: Theme[] = ["light", "dark", "auto", "graphite", "midnight", "ocean", "emerald", "crimson"];
+      const idx = themes.indexOf(prev.theme);
+      const next = { ...prev, theme: themes[(idx + 1) % themes.length] };
+      saveSettings(next);
+      return next;
+    });
+  }, []);
+
+  return {
+    theme: settings.theme,
+    resolvedTheme: resolvedLightDark,
+    settings,
+    setTheme,
+    updateSettings,
+    resetSettings,
+    toggleTheme,
+  };
+}

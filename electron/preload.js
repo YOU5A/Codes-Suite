@@ -1,0 +1,35 @@
+const { contextBridge, ipcRenderer } = require("electron");
+
+const api = {
+  window: {
+    minimize: () => ipcRenderer.invoke("window:minimize"),
+    maximize: () => ipcRenderer.invoke("window:maximize"),
+    close: () => ipcRenderer.invoke("window:close"),
+    isMaximized: () => ipcRenderer.invoke("window:isMaximized"),
+    onMaximizeChange: (callback) => {
+      ipcRenderer.on("window:maximizeChange", (_event, maximized) => callback(maximized));
+    },
+    setOpacity: (opacity) => ipcRenderer.invoke("window:setOpacity", opacity),
+    getPosition: () => ipcRenderer.invoke("window:getPosition"),
+    getSize: () => ipcRenderer.invoke("window:getSize"),
+    setPosition: (x, y) => ipcRenderer.invoke("window:setPosition", x, y),
+  },
+  python: {
+    call: (method, params) => ipcRenderer.invoke("python:call", method, params),
+    status: () => ipcRenderer.invoke("python:status"),
+  },
+  dialog: {
+    openFolder: () => ipcRenderer.invoke("dialog:openFolder"),
+    openFile: (filters) => ipcRenderer.invoke("dialog:openFile", filters),
+    saveFile: (options) => ipcRenderer.invoke("dialog:saveFile", options),
+  },
+  shell: {
+    openPath: (filePath) => ipcRenderer.invoke("shell:openPath", filePath),
+    openExternal: (url) => ipcRenderer.invoke("shell:openExternal", url),
+  },
+  app: {
+    getPath: (name) => ipcRenderer.invoke("app:getPath", name),
+  },
+};
+
+contextBridge.exposeInMainWorld("electronAPI", api);
