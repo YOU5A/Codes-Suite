@@ -1,4 +1,4 @@
-<p align="center">
+﻿<p align="center">
   <img src="public/icon.png" width="120" alt="Codes Suite" />
 </p>
 
@@ -10,7 +10,7 @@
 
 <p align="center">
   <img src="https://img.shields.io/badge/version-1.1.0-blue?style=flat-square" alt="Version" />
-  <img src="https://img.shields.io/badge/platform-Windows%2010%2B-0078D6?style=flat-square&logo=windows" alt="Platform" />
+  <img src="https://img.shields.io/badge/platform-Windows%2011-0078D6?style=flat-square&logo=windows" alt="Platform" />
   <img src="https://img.shields.io/badge/Electron-42%2B-47848F?style=flat-square&logo=electron" alt="Electron" />
   <img src="https://img.shields.io/badge/React-19-61DAFB?style=flat-square&logo=react" alt="React" />
   <img src="https://img.shields.io/badge/license-MIT-green?style=flat-square" alt="License" />
