@@ -1,4 +1,4 @@
-﻿# Dependencies
+# Dependencies
 node_modules/
 
 # Build outputs
@@ -15,6 +15,7 @@ __pycache__/
 build-support/
 
 # Temp files
+main.js
 .patch1.diff
 temp_patch.txt
 *.diff

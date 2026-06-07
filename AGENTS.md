@@ -80,7 +80,7 @@ Codes Suite
 │   │   ├── Toast.tsx            — Toast 通知容器（右上角，spring 动画）
 │   │   └── ConfirmDialog.tsx    — 确认对话框（模态，支持 danger 模式）
 │   ├── pages/                   — 六大功能页面
-│   │   ├── Dashboard.tsx        — 仪表盘：系统信息 + 快捷入口 + 操作历史 + 最近备份（330 行）
+│   │   ├── Dashboard.tsx        — 仪表盘：系统信息 + 快捷入口 + 操作历史 + 最近备份（328 行）
 │   │   ├── Win32Priority.tsx    — Win32 优先级：注册表读写 + 预设表格 + 备份管理（438 行）
 │   │   ├── AppCpuPriority.tsx   — 应用 CPU 优先级：CRUD + 导入导出 + 自定义下拉（549 行）
 │   │   ├── MusicManager.tsx     — 音乐管理器：扫描/标签编辑/封面管理/播放器栏（568 行）
@@ -404,7 +404,7 @@ Python 嵌入式环境：`build-support/embed-python/venv/` — Python 3.13 + py
 
 权限检查链路：
 
-1. `electron/main.js` → `ensureAdmin()`：`net session` 检测，不足时 `powershell Start-Process -Verb RunAs` 提升
+1. `electron/main.js` → `ensureAdmin()`：`net session` 检测，不足时通过 `spawnSync` 调用 PowerShell `Start-Process -Verb RunAs` 提升（开发模式附带 `-ArgumentList '.' -WorkingDirectory`）
 2. `resources/Win32PrioritySeparation.pyw` → `AdminChecker.is_admin()`：业务层权限检查
 3. `bridge/server.py` → `handle_admin_check()` / `handle_admin_restart()`：RPC 层权限检查
 
