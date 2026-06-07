@@ -1,7 +1,7 @@
 const { app, BrowserWindow, ipcMain, dialog, shell, Tray, Menu, nativeTheme } = require("electron");
 const fs = require("fs");
 const path = require("path");
-const { execSync } = require("child_process");
+const { execSync, spawnSync } = require("child_process");
 const { PythonBridge } = require("./python-bridge");
 
 let mainWindow = null;
@@ -23,10 +23,26 @@ function ensureAdmin() {
   } catch {}
   // Not admin: elevate via PowerShell with Base64 to avoid quoting issues
   try {
-    const psCmd = `Start-Process -FilePath '${process.execPath.replace(/'/g, "''")}' -Verb RunAs`;
+    const electronPath = process.execPath.replace(/'/g, "''");
+    let psCmd;
+    if (app.isPackaged) {
+      psCmd = `Start-Process -FilePath '${electronPath}' -Verb RunAs`;
+    } else {
+      const workDir = process.cwd().replace(/'/g, "''");
+      psCmd = `Start-Process -FilePath '${electronPath}' -ArgumentList '.' -WorkingDirectory '${workDir}' -Verb RunAs`;
+    }
     const encoded = Buffer.from(psCmd, "utf16le").toString("base64");
-    execSync(`powershell -NoProfile -EncodedCommand ${encoded}`, { stdio: "ignore" });
-  } catch (err) { console.error("[Admin] Elevation failed:", err.message); }
+    const result = spawnSync("powershell", ["-NoProfile", "-EncodedCommand", encoded], {
+      stdio: "pipe",
+      windowsHide: true,
+      encoding: "utf-8",
+    });
+    if (result.error) throw result.error;
+    if (result.status !== 0) throw new Error(result.stderr.trim() || `Exit code ${result.status}`);
+  } catch (err) {
+    console.error("[Admin] Elevation failed:", err.message);
+    if (err.stderr) console.error("[Admin] stderr:", err.stderr.toString().trim());
+  }
   app.quit();
 }
 ensureAdmin();

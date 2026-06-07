@@ -40,9 +40,9 @@
 - 删除文件时只能一次删除一个**明确路径**的文件
 - 如果任务需要批量删除文件，必须停止并向用户请求
 
-### 受保护目录
+### 受保护目录（禁止删除）
 
-以下目录禁止删除：`AI Agent/`、`UserTool/`、`UserTool/dist/`、`UserTool/node_modules/`、`backups/`、`resources/`、`data/`、`node_modules/`、`bridge/`、`build-support/`
+以下目录禁止删除：`resources/`、`data/`、`node_modules/`、`bridge/`、`build-support/`、`dist/`、`dist-electron/`
 
 ---
 
@@ -396,6 +396,7 @@ Python 嵌入式环境：`build-support/embed-python/venv/` — Python 3.13 + py
 | `build-support/` | 嵌入式 Python 虚拟环境及其依赖 |
 | `.patch1.diff` | 临时补丁 |
 | `temp_patch.txt` | 临时文件 |
+| `main.js` | 根目录游离文件（`electron/main.js`的旧副本），已在 .gitignore 中 |
 
 ---
 
