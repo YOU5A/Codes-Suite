@@ -1,6 +1,5 @@
-import { ReactNode } from "react";
-import { motion } from "framer-motion";
-import { EASE_OUT } from "@/utils/animations";
+﻿import { ReactNode } from "react";
+import { GlassCard as DSGlassCard } from "@/design-system";
 
 interface GlassCardProps {
   children: ReactNode;
@@ -9,21 +8,20 @@ interface GlassCardProps {
   style?: React.CSSProperties;
 }
 
+/**
+ * GlassCard — backward-compatible wrapper.
+ *
+ * Delegates to the design-system GlassCard.
+ * The className prop is accepted for legacy usage but
+ * visual styling is now fully driven by the design system.
+ */
 export default function GlassCard({ children, className, onClick, style }: GlassCardProps) {
   return (
-    <motion.div
-      className={`glass-card ${className ?? ""}`}
+    <DSGlassCard
       onClick={onClick}
-      style={{
-        padding: 20,
-        cursor: onClick ? "pointer" : "default",
-        ...style,
-      }}
-      initial={{ opacity: 0, y: 12 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.25, ease: EASE_OUT }}
+      style={style}
     >
       {children}
-    </motion.div>
+    </DSGlassCard>
   );
 }

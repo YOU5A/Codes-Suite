@@ -10,6 +10,7 @@ import ConfirmDialog from "./components/ConfirmDialog";
 import type { Page } from "./types";
 import TitleBar from "./components/TitleBar";
 import Sidebar from "./components/Sidebar";
+import { GlassLayout, GlassMain, pageTransition } from "./design-system";
 
 // Lazy-loaded pages for code splitting
 const Dashboard = lazy(() => import("./pages/Dashboard"));
@@ -68,52 +69,58 @@ function AppContent() {
   };
 
   return (
-    <div style={{ position: "relative", width: "100%", height: "100%" }}>
-      <div className="app-root">
-      <div style={{ position: "relative", zIndex: 1 }}>
+    <GlassLayout>
+      {/* Title Bar — sits above the body grid */}
+      <div style={{ position: "relative", zIndex: 30, flexShrink: 0 }}>
         <TitleBar
           isMaximized={isMaximized}
           onToggleMaximize={() => window.electronAPI?.window.maximize()}
         />
       </div>
-      <div style={{ display: "flex", flex: 1, overflow: "hidden", position: "relative", zIndex: 1 }}>
-        <Sidebar
-          currentPage={currentPage}
-          onNavigate={handleNavigate}
-        />
-        <main
-          style={{
-            flex: 1,
-            overflow: "auto",
-            padding: settings.compactMode ? "16px" : "24px",
-            background: "var(--bg-primary)",
-            zoom: `var(--font-scale)`,
-          }}
+
+      {/* Body: sidebar + main content */}
+      <div
+        className="app-body"
+        style={{
+          display: "flex",
+          flex: 1,
+          overflow: "hidden",
+          position: "relative",
+          zIndex: 1,
+        }}
+      >
+        <Sidebar currentPage={currentPage} onNavigate={handleNavigate} />
+
+        <GlassMain
+          padding={settings.compactMode ? 16 : 24}
         >
           <Suspense fallback={<PageLoader />}>
-          {settings.animationSpeed === "off" ? (
-            <div style={{ height: "100%" }}>{pages[currentPage]}</div>
-          ) : (
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={currentPage}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: getAnimDuration(settings.animationSpeed), ease: EASE_OUT }}
-                style={{ height: "100%" }}
-              >
-                {pages[currentPage]}
-              </motion.div>
-            </AnimatePresence>
-          )}
+            {settings.animationSpeed === "off" ? (
+              <div style={{ height: "100%" }}>{pages[currentPage]}</div>
+            ) : (
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={currentPage}
+                  variants={pageTransition}
+                  initial="initial"
+                  animate="animate"
+                  exit="exit"
+                  style={{
+                    height: "100%",
+                    zoom: `var(--font-scale)`,
+                  }}
+                >
+                  {pages[currentPage]}
+                </motion.div>
+              </AnimatePresence>
+            )}
           </Suspense>
-        </main>
+        </GlassMain>
       </div>
+
       <ToastContainer />
       <ConfirmDialog />
-      </div>
-    </div>
+    </GlassLayout>
   );
 }
 

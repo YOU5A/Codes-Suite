@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+﻿import { useState, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -300,6 +300,7 @@ export default function Settings() {
   const handleReset = async () => {
     if (await confirm({ title: tx.resetConfirm, danger: true })) {
       resetSettings();
+      window.electronAPI?.window.setOpacity(1);
       showToast(lang === "zh" ? "已重置为默认设置" : "Settings reset to defaults", "success");
     }
   };

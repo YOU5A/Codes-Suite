@@ -1,7 +1,7 @@
 import { motion, AnimatePresence } from "framer-motion";
-import { EASE_OUT } from "@/utils/animations";
-import { CheckCircle, XCircle, AlertTriangle, Info, X } from "lucide-react";
+import { CheckCircle, XCircle, AlertTriangle, Info } from "lucide-react";
 import { useToast, type ToastType } from "@/contexts/ToastContext";
+import { glassEntrance } from "@/design-system";
 
 const iconMap: Record<ToastType, React.ReactNode> = {
   success: <CheckCircle size={16} />,
@@ -37,12 +37,9 @@ export default function ToastContainer() {
         {toasts.map((toast) => (
           <motion.div
             key={toast.id}
-            initial={{ opacity: 0, x: 60, scale: 0.95 }}
-            animate={toast.exiting
-              ? { opacity: 0, x: 60, scale: 0.9 }
-              : { opacity: 1, x: 0, scale: 1 }
-            }
-            transition={{ type: "tween", duration: 0.25, ease: EASE_OUT }}
+            variants={glassEntrance}
+            initial="hidden"
+            animate={toast.exiting ? "exit" : "visible"}
             style={{
               display: "flex",
               alignItems: "center",

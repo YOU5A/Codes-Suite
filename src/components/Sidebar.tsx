@@ -1,10 +1,11 @@
-import { motion } from "framer-motion";
-import { EASE_OUT } from "@/utils/animations";
+﻿import { motion } from "framer-motion";
+import { springSnappy } from "@/design-system";
 import {
   LayoutDashboard, Cpu, Gauge, Music, Database, Settings,
 } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useTheme } from "@/hooks/useTheme";
+import { GlassSurface } from "@/design-system";
 import type { Page, Language } from "@/types";
 
 interface SidebarProps {
@@ -45,18 +46,23 @@ export default function Sidebar({ currentPage, onNavigate }: SidebarProps) {
   const { settings } = useTheme();
 
   return (
-    <nav
+    <GlassSurface
+      tier="regular"
+      styleOverrides={{ radius: 0, shadow: "none" }}
       style={{
-        width: `var(--sidebar-width)`,
+        width: "var(--sidebar-width)",
         minWidth: 180,
         maxWidth: 320,
         display: "flex",
         flexDirection: "column",
         padding: settings.compactMode ? "8px 6px" : "12px 8px",
-        background: "var(--bg-secondary)",
         borderRight: "1px solid var(--border-color)",
+        borderTop: "none",
+        borderBottom: "none",
+        borderLeft: "none",
         gap: 2,
         flexShrink: 0,
+        borderRadius: 0,
       }}
     >
       {navItems.map((item) => {
@@ -66,7 +72,7 @@ export default function Sidebar({ currentPage, onNavigate }: SidebarProps) {
             key={item.id}
             onClick={() => onNavigate(item.id)}
             whileTap={{ scale: 0.97 }}
-            transition={{ type: "tween", duration: 0.12, ease: EASE_OUT }}
+            transition={springSnappy}
             style={{
               display: "flex",
               alignItems: "center",
@@ -102,6 +108,6 @@ export default function Sidebar({ currentPage, onNavigate }: SidebarProps) {
       >
         Codes Suite V1.1
       </div>
-    </nav>
+    </GlassSurface>
   );
 }

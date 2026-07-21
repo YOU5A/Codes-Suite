@@ -1,4 +1,5 @@
-import { Minus, Square, X, Copy } from "lucide-react";
+﻿import { Minus, Square, X, Copy } from "lucide-react";
+import { GlassSurface } from "@/design-system";
 
 interface TitleBarProps {
   isMaximized: boolean;
@@ -10,17 +11,21 @@ export default function TitleBar({ isMaximized, onToggleMaximize }: TitleBarProp
   const noDragStyle = { WebkitAppRegion: "no-drag" } as React.CSSProperties;
 
   return (
-    <div
+    <GlassSurface
+      tier="ultraThin"
+      noBlur={false}
+      styleOverrides={{ radius: 0, shadow: "none" }}
       style={{
         height: "var(--titlebar-height)",
         display: "flex",
         alignItems: "center",
         justifyContent: "space-between",
         padding: "0 8px",
-        background: "var(--bg-elevated)",
-        backdropFilter: "blur(20px)",
-        WebkitBackdropFilter: "blur(20px)",
         borderBottom: "1px solid var(--border-color)",
+        borderTop: "none",
+        borderLeft: "none",
+        borderRight: "none",
+        borderRadius: 0,
         ...dragStyle,
         flexShrink: 0,
         zIndex: 100,
@@ -56,6 +61,6 @@ export default function TitleBar({ isMaximized, onToggleMaximize }: TitleBarProp
           <X size={14} strokeWidth={2} />
         </button>
       </div>
-    </div>
+    </GlassSurface>
   );
 }
