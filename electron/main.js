@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, dialog, shell, Tray, Menu, nativeTheme } = require("electron");
+﻿const { app, BrowserWindow, ipcMain, dialog, shell, Tray, Menu, nativeTheme } = require("electron");
 const fs = require("fs");
 const path = require("path");
 const { execSync, spawnSync } = require("child_process");
@@ -53,6 +53,8 @@ function createWindow() {
     minWidth: 960,
     minHeight: 640,
     frame: false,
+    thickFrame: false,
+frame: false,
     transparent: true,
     backgroundColor: "#00000000",
     titleBarStyle: "hidden",
@@ -66,11 +68,6 @@ function createWindow() {
       sandbox: false,
     },
   });
-
-  if (process.platform === "win32") {
-    try { mainWindow.setBackgroundMaterial("acrylic"); } catch {}
-    try { mainWindow.setVibrancy("dark"); } catch {}
-  }
 
   mainWindow.once("ready-to-show", () => { mainWindow.show(); });
 

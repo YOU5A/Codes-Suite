@@ -1,4 +1,4 @@
-# AGENTS.md — Codes Suite
+﻿# AGENTS.md — Codes Suite
 
 **项目名称:** Codes Suite
 **作者:** Y0USA
@@ -157,7 +157,7 @@ React 页面 → IPC (invoke) → Electron main.js → PythonBridge.call()
 ### Electron 主进程特性（`electron/main.js`）
 
 - 无边框窗口（`frame: false`, `transparent: true`）
-- 透明背景 + 亚克力材质（`setBackgroundMaterial("acrylic")`）+ Vibrancy
+- 透明背景 + 纯 CSS 毛玻璃效果（`backdrop-filter: blur()`）
 - 自定义 GPU 缓存路径（`app.setPath('userData', ...)` 避免权限问题）
 - 自定义协议 `codes-suite:///` 用于加载本地文件
 - 系统托盘（右键：Show/Quit，单击恢复/聚焦）
@@ -334,7 +334,7 @@ interface AppSettings {
 - Apple Liquid Glass / Glass Morphism / Fluent Motion
 - 无边框窗口（`frame: false`）
 - 圆角 20px（`--radius`，可调）
-- 毛玻璃 + 亚克力（`setBackgroundMaterial("acrylic")`）+ Vibrancy
+- 毛玻璃 + 纯 CSS backdrop-filter 模糊
 - 背景模糊（`backdrop-filter: blur(15-20px)`）
 - 通用 CSS 类：`.glass-card`、`.glass-panel`、`.btn-primary`、`.btn-secondary`、`.btn-danger`、`.btn-icon`、`.input-field`
 - 字体栈：`-apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei", "PingFang SC", sans-serif`
