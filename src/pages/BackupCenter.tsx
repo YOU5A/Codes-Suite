@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
 import { RotateCcw, Trash2, FolderOpen, Download } from "lucide-react";
 import GlassCard from "@/components/GlassCard";
+import { GlassButton } from "@/design-system";
 import { useToast } from "@/contexts/ToastContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useConfirm } from "@/contexts/ConfirmContext";
@@ -122,9 +123,9 @@ export default function BackupCenter(_props: Props) {
     <motion.div animate={{ opacity: 1 }} transition={{ duration: animationDuration, ease: EASE_OUT }} style={{ maxWidth: 800, margin: "0 auto", width: "100%" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
         <h1 style={{ fontSize: 22, fontWeight: 600, color: "var(--text-primary)" }}>{tx.title}</h1>
-        <button className="btn-secondary" onClick={openBackupDir} style={{ padding: "6px 14px", fontSize: 12 }}>
+        <GlassButton variant="secondary" onClick={openBackupDir} style={{ padding: "6px 14px", fontSize: 12 }}>
           <FolderOpen size={12} /> {tx.openDir}
-        </button>
+        </GlassButton>
       </div>
 
       {loading ? (
@@ -139,7 +140,7 @@ export default function BackupCenter(_props: Props) {
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
           {backups.map((bp) => (
-            <div key={bp.filename} className="glass-card" style={{
+            <GlassCard key={bp.filename} style={{
               padding: "16px 20px", display: "flex", alignItems: "center", justifyContent: "space-between",
             }}>
               <div>
@@ -161,17 +162,17 @@ export default function BackupCenter(_props: Props) {
                 </div>
               </div>
               <div style={{ display: "flex", gap: 8 }}>
-                <button className="btn-secondary" onClick={() => exportBackup(bp)} style={{ padding: "6px 14px", fontSize: 12 }}>
+                <GlassButton variant="secondary" onClick={() => exportBackup(bp)} style={{ padding: "6px 14px", fontSize: 12 }}>
                   <Download size={12} /> {tx.export}
-                </button>
-                <button className="btn-secondary" onClick={() => restoreBackup(bp)} style={{ padding: "6px 14px", fontSize: 12 }}>
+                </GlassButton>
+                <GlassButton variant="secondary" onClick={() => restoreBackup(bp)} style={{ padding: "6px 14px", fontSize: 12 }}>
                   <RotateCcw size={12} /> {tx.restore}
-                </button>
-                <button className="btn-secondary" onClick={() => deleteBackup(bp)} style={{ padding: "6px 14px", fontSize: 12 }}>
+                </GlassButton>
+                <GlassButton variant="secondary" onClick={() => deleteBackup(bp)} style={{ padding: "6px 14px", fontSize: 12 }}>
                   <Trash2 size={12} /> {tx.delete}
-                </button>
+                </GlassButton>
               </div>
-            </div>
+            </GlassCard>
           ))}
         </div>
       )}

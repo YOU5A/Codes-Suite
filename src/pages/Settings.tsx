@@ -1,5 +1,4 @@
-﻿import { useState, useRef, useEffect } from "react";
-import { createPortal } from "react-dom";
+import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Sun, Moon, Monitor, Globe, Palette, Sliders,
@@ -10,6 +9,14 @@ import { useTheme } from "@/hooks/useTheme";
 import { useConfirm } from "@/contexts/ConfirmContext";
 import { useToast } from "@/contexts/ToastContext";
 import GlassCard from "@/components/GlassCard";
+import {
+  GlassButton,
+  GlassInput,
+  GlassModal,
+  GlassSelect,
+  GlassToggle,
+  springDefault,
+} from "@/design-system";
 import { getAnimDuration, EASE_OUT } from "@/utils/animations";
 import type { Theme, Language } from "@/types";
 
@@ -58,7 +65,7 @@ const t: Record<Language, Record<string, string>> = {
     aboutAuthor: "作者: Y0USA",
     aboutTech: "Electron + React + Python",
     github: "GitHub",
-    bilibili: "B站",
+    bilibli: "B站",
     usertool: "UserTool",
     language: "语言",
   },
@@ -106,19 +113,16 @@ const t: Record<Language, Record<string, string>> = {
     aboutAuthor: "Author: Y0USA",
     aboutTech: "Electron + React + Python",
     github: "GitHub",
-    bilibili: "Bilibili",
+    bilibli: "Bilibili",
     usertool: "UserTool",
     language: "Language",
   },
 };
 
-const themes: { value: Theme; icon: React.ReactNode; key: string }[] = [
-  { value: "auto", icon: <Monitor size={16} />, key: "auto" },
-];
-
 const themeDropdownOptions: { value: Theme; icon: React.ReactNode; key: string }[] = [
   { value: "light", icon: <Sun size={16} />, key: "light" },
   { value: "dark", icon: <Moon size={16} />, key: "dark" },
+  { value: "auto", icon: <Monitor size={16} />, key: "auto" },
   { value: "graphite", icon: <Palette size={16} />, key: "graphite" },
   { value: "midnight", icon: <Moon size={16} />, key: "midnight" },
   { value: "ocean", icon: <Palette size={16} />, key: "ocean" },
@@ -126,381 +130,267 @@ const themeDropdownOptions: { value: Theme; icon: React.ReactNode; key: string }
   { value: "crimson", icon: <Palette size={16} />, key: "crimson" },
 ];
 
-function Toggle({ active, onClick }: { active: boolean; onClick: () => void }) {
-  return (
-    <div
-      className={"toggle-switch" + (active ? " active" : "")}
-      onClick={onClick}
-      style={{
-        width: 44, height: 26, borderRadius: 13,
-        position: "relative", cursor: "pointer", flexShrink: 0,
-        transition: "background var(--transition-fast) ease",
-      }}
-    >
-      <div style={{
-        position: "absolute",
-        top: 3, left: active ? 21 : 3,
-        width: 20, height: 20, borderRadius: "50%",
-        boxShadow: "0 1px 3px rgba(0,0,0,0.15)",
-        transition: "left var(--transition-fast) ease",
-      }} />
-    </div>
-  );
-}
-
-function ThemeDropdown({
-  value,
-  onChange,
-  options,
-  tx,
-}: {
-  value: Theme;
-  onChange: (v: Theme) => void;
-  options: { value: Theme; icon: React.ReactNode; key: string }[];
-  tx: Record<string, string>;
-}) {
-  const [open, setOpen] = useState(false);
-  const triggerRef = useRef<HTMLDivElement>(null);
-  const [dropdownStyle, setDropdownStyle] = useState<React.CSSProperties>({});
-
-
-  useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      const target = e.target as HTMLElement;
-      if (triggerRef.current && triggerRef.current.contains(target)) return;
-      if (target.closest("[data-theme-dropdown]")) return;
-      setOpen(false);
-    };
-    if (open) {
-      document.addEventListener("mousedown", handler);
-      const rect = triggerRef.current?.getBoundingClientRect();
-      if (rect) {
-        setDropdownStyle({
-          position: "fixed",
-          top: rect.bottom + 6,
-          left: rect.left,
-          width: rect.width,
-          zIndex: 9999,
-        });
-      }
-      return () => document.removeEventListener("mousedown", handler);
-    }
-  }, [open]);
-
-  const selected = options.find((o) => o.value === value);
-  const selectedLabel = selected ? (tx[selected.key] ?? selected.value) : (tx.light ?? "Light");
-  const selectedIcon = selected?.icon ?? <Sun size={14} />;
-
-  return (
-    <div ref={triggerRef} style={{ position: "relative", flex: 1 }}>
-      <div
-        onClick={() => setOpen(!open)}
-        className="input-field"
-        style={{
-          paddingRight: 32, cursor: "pointer",
-          display: "flex", alignItems: "center", gap: 8,
-          userSelect: "none", height: 40,
-          borderColor: value !== "auto" ? "var(--accent)" : undefined,
-          boxShadow: value !== "auto" ? "0 0 0 2px var(--accent-bg)" : undefined,
-        }}
-      >
-        <span style={{ color: "var(--text-secondary)" }}>{selectedIcon}</span>
-        <span style={{ flex: 1, fontSize: 13 }}>{selectedLabel}</span>
-        <motion.svg
-          animate={{ rotate: open ? 180 : 0 }}
-          transition={{ duration: 0.2, ease: EASE_OUT }}
-          style={{ position: "absolute", right: 12, top: "50%", marginTop: -3 }}
-          width="10" height="6" viewBox="0 0 10 6" fill="none"
-        >
-          <path d="M1 1L5 5L9 1" stroke="var(--text-tertiary)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-        </motion.svg>
-      </div>
-      {open && createPortal(
-        <AnimatePresence>
-          <motion.div
-            data-theme-dropdown
-            initial={{ opacity: 0, y: -6, scale: 0.96 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -6, scale: 0.96 }}
-            transition={{ duration: 0.18, ease: EASE_OUT }}
-            style={{
-              ...dropdownStyle,
-              backdropFilter: "blur(20px)",
-              WebkitBackdropFilter: "blur(20px)",
-              border: "1px solid var(--border-color)",
-              borderRadius: 12,
-              boxShadow: "0 12px 40px rgba(0,0,0,0.25), 0 0 0 0.5px rgba(255,255,255,0.06) inset",
-              padding: "6px 0",
-              overflow: "hidden",
-            }}
-          >
-            {options.map((o) => (
-              <div
-                key={o.value}
-                onClick={() => { onChange(o.value); setOpen(false); }}
-                style={{
-                  padding: "9px 14px",
-                  fontSize: 13,
-                  color: o.value === value ? "var(--accent)" : "var(--text-primary)",
-                  cursor: "pointer",
-                  transition: "background 0.15s ease",
-                  fontWeight: o.value === value ? 500 : 400,
-                  display: "flex", alignItems: "center", gap: 8,
-                }}
-                onMouseEnter={(e) => {
-                  if (o.value !== value) (e.currentTarget as HTMLElement).style.background = "var(--bg-tertiary)";
-                }}
-                onMouseLeave={(e) => {
-                  if (o.value !== value) (e.currentTarget as HTMLElement).style.background = "transparent";
-                }}
-              >
-                <span style={{ color: o.value === value ? "var(--accent)" : "var(--text-tertiary)" }}>{o.icon}</span>
-                {tx[o.key] ?? o.value}
-              </div>
-            ))}
-          </motion.div>
-        </AnimatePresence>,
-        document.body
-      )}
-    </div>
-  );
-}
-
-function SliderRow({ icon, label, value, min, max, step, onChange, unit }: {
-  icon: React.ReactNode; label: string; value: number; min: number; max: number;
-  step?: number; onChange: (v: number) => void; unit?: string;
+function ToggleRow({ icon, label, active, onChange }: {
+  icon: React.ReactNode; label: string; active: boolean; onChange: (v: boolean) => void;
 }) {
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <span style={{ color: "var(--text-secondary)" }}>{icon}</span>
-          <span style={{ fontSize: 13, color: "var(--text-primary)" }}>{label}</span>
-        </div>
-        <span style={{ fontSize: 13, fontWeight: 600, color: "var(--accent)", minWidth: 48, textAlign: "right" }}>
-          {value}{unit ?? ""}
-        </span>
+    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+        <span style={{ color: "var(--text-secondary)" }}>{icon}</span>
+        <span style={{ fontSize: 13, color: "var(--text-primary)" }}>{label}</span>
       </div>
-      <input type="range" min={min} max={max} step={step ?? 1} value={value}
-        onChange={(e) => onChange(Number(e.target.value))} style={{ width: "100%" }} />
+      <GlassToggle active={active} onChange={onChange} />
     </div>
   );
 }
+
+const sidebarWidthOptions = [
+  { value: "200", label: "200px" },
+  { value: "220", label: "220px" },
+  { value: "240", label: "240px" },
+  { value: "260", label: "260px" },
+  { value: "280", label: "280px" },
+];
+
+const fontScaleOptions = [
+  { value: "80", label: "80%" },
+  { value: "90", label: "90%" },
+  { value: "100", label: "100%" },
+  { value: "110", label: "110%" },
+  { value: "120", label: "120%" },
+  { value: "140", label: "140%" },
+];
 
 export default function Settings() {
   const { lang, setLang } = useLanguage();
+  const tx = t[lang];
   const { theme, settings, setTheme, updateSettings, resetSettings } = useTheme();
   const { confirm } = useConfirm();
   const { showToast } = useToast();
-  const tx = t[lang];
+  const animationDuration = getAnimDuration(settings.animationSpeed);
 
+  const [themePickerOpen, setThemePickerOpen] = useState(false);
+  const [localVolume, setLocalVolume] = useState(80);
 
-
+  useEffect(() => {
+    window.electronAPI?.python.call("config.get").then((cfg: any) => {
+      if (cfg?.musicVolume !== undefined) setLocalVolume(cfg.musicVolume);
+      if (cfg?.autoStart !== undefined) updateSettings({ autoStart: cfg.autoStart } as any);
+      if (cfg?.minimizeToTray !== undefined) updateSettings({ minimizeToTray: cfg.minimizeToTray } as any);
+      if (cfg?.closeToTray !== undefined) updateSettings({ closeToTray: cfg.closeToTray } as any);
+      if (cfg?.autoAdmin !== undefined) updateSettings({ autoAdmin: cfg.autoAdmin } as any);
+      if (cfg?.autoResume !== undefined) updateSettings({ autoResume: cfg.autoResume } as any);
+      if (cfg?.autoScan !== undefined) updateSettings({ autoScan: cfg.autoScan } as any);
+    }).catch(() => {});
+  }, []);
 
   const handleReset = async () => {
-    if (await confirm({ title: tx.resetConfirm, danger: true })) {
-      resetSettings();
-      window.electronAPI?.window.setOpacity(1);
-      showToast(lang === "zh" ? "已重置为默认设置" : "Settings reset to defaults", "success");
-    }
+    const ok = await confirm({ title: tx.resetConfirm, danger: true });
+    if (!ok) return;
+    resetSettings();
+    showToast(tx.resetConfirm, "success");
   };
 
+  const onVolumeChange = (v: number) => {
+    setLocalVolume(v);
+    window.electronAPI?.python.call("config.set", { musicVolume: v });
+  };
 
-
-  const animDuration = getAnimDuration(settings.animationSpeed);
+  const currentThemeOption = themeDropdownOptions.find(o => o.value === theme) ?? themeDropdownOptions[0];
 
   return (
-    <motion.div
-      animate={{ opacity: 1 }}
-      transition={{ duration: animDuration, ease: EASE_OUT }}
-      style={{ maxWidth: 680, margin: "0 auto" }}
-    >
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 24 }}>
-        <h1 style={{ fontSize: 24, fontWeight: 600, color: "var(--text-primary)", letterSpacing: "-0.02em" }}>
-          {tx.title}
-        </h1>
-      </div>
+    <motion.div animate={{ opacity: 1 }} transition={{ duration: animationDuration, ease: EASE_OUT }} style={{ maxWidth: 720, margin: "0 auto", width: "100%" }}>
+      <h1 style={{ fontSize: 22, fontWeight: 600, color: "var(--text-primary)", marginBottom: 24, letterSpacing: "-0.02em" }}>
+        {tx.title}
+      </h1>
 
       {/* ── Appearance ── */}
       <div style={{ marginBottom: 24 }}>
-        <h2 style={{
-          fontSize: 11, fontWeight: 600, color: "var(--text-tertiary)", textTransform: "uppercase",
-          letterSpacing: "0.06em", marginBottom: 12, paddingLeft: 4,
-        }}>
-          <Eye size={12} style={{ display: "inline", marginRight: 6, verticalAlign: "middle" }} />
+        <h2 className="section-title" style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 12, paddingLeft: 4 }}>
+          <Eye size={12} style={{ display: "inline", verticalAlign: "middle" }} />
           {tx.appearance}
         </h2>
-
-        {/* Theme selector: Auto button + dropdown */}
-        <GlassCard style={{ marginBottom: 12 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 14 }}>
-            <Palette size={14} style={{ color: "var(--text-secondary)" }} />
-            <span style={{ fontSize: 13, fontWeight: 500, color: "var(--text-primary)" }}>{tx.themeLabel}</span>
-          </div>
-          <div style={{ display: "flex", gap: 8 }}>
-            {themes.map((t) => (
-              <button
-                key={t.value}
-                onClick={() => setTheme(t.value)}
-                style={{
-                  display: "flex", alignItems: "center", gap: 8,
-                  padding: "10px 18px", borderRadius: 10, cursor: "pointer", height: 40,
-                  border: theme === t.value ? "2px solid var(--accent)" : "1px solid var(--border-color)",
-                  color: theme === t.value ? "var(--accent)" : "var(--text-secondary)",
-                  transition: "all var(--transition-fast) ease", flexShrink: 0,
-                }}
-              >
-                {t.icon}
-                <span style={{ fontSize: 13, fontWeight: 500 }}>{(tx as any)[t.key] ?? t.key}</span>
-              </button>
-            ))}
-            <ThemeDropdown value={theme} onChange={setTheme} options={themeDropdownOptions} tx={tx as any} />
-          </div>
-        </GlassCard>
-
-        {/* Opacity, Blur, Radius */}
-        <GlassCard style={{ marginBottom: 12 }}>
-          <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-            <SliderRow icon={<Eye size={14} />} label={tx.opacity}
-              value={settings.windowOpacity} min={50} max={100} unit="%"
-              onChange={(v) => { updateSettings({ windowOpacity: v }); window.electronAPI?.window.setOpacity(v / 100); }}
-            />
-            <SliderRow icon={<Layout size={14} />} label={tx.radius}
-              value={settings.borderRadius} min={8} max={30} unit="px"
-              onChange={(v) => updateSettings({ borderRadius: v })}
-            />
-          </div>
-        </GlassCard>
-
-        {/* Animation speed */}
         <GlassCard>
-          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
-            <Zap size={14} style={{ color: "var(--text-secondary)" }} />
-            <span style={{ fontSize: 13, fontWeight: 500, color: "var(--text-primary)" }}>{tx.animSpeed}</span>
-          </div>
-          <div style={{ display: "flex", gap: 8 }}>
-            {(["fast", "normal", "off"] as const).map((s) => (
-              <motion.button key={s}
-                className={settings.animationSpeed === s ? "btn-primary" : "btn-secondary"}
-                onClick={() => updateSettings({ animationSpeed: s })}
-                whileTap={{ scale: 0.94 }}
-                transition={{ type: "spring", stiffness: 500, damping: 25 }}
-                style={{ flex: 1, justifyContent: "center", fontSize: 12, padding: "10px 16px" }}
-              >
-                {(tx as any)["anim" + s.charAt(0).toUpperCase() + s.slice(1)] ?? s}
-              </motion.button>
-            ))}
+          <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
+
+            {/* Theme selector */}
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                {currentThemeOption.icon}
+                <span style={{ fontSize: 13, color: "var(--text-primary)" }}>{tx.themeLabel}</span>
+              </div>
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <span style={{ fontSize: 13, color: "var(--text-secondary)", fontWeight: 500 }}>
+                  {currentThemeOption.key.charAt(0).toUpperCase() + currentThemeOption.key.slice(1)}
+                </span>
+                <GlassButton variant="ghost" size="sm" onClick={() => setThemePickerOpen(true)}>
+                  <Palette size={14} />
+                </GlassButton>
+              </div>
+            </div>
+
+            {/* Opacity slider */}
+            <div>
+              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
+                <span style={{ fontSize: 12, color: "var(--text-secondary)" }}>{tx.opacity}</span>
+                <span style={{ fontSize: 12, color: "var(--text-tertiary)" }}>{settings.windowOpacity}%</span>
+              </div>
+              <input type="range" min={70} max={100} value={settings.windowOpacity}
+                onChange={(e) => updateSettings({ windowOpacity: Number(e.target.value) })}
+                style={{ width: "100%" }} />
+            </div>
+
+            {/* Radius slider */}
+            <div>
+              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
+                <span style={{ fontSize: 12, color: "var(--text-secondary)" }}>{tx.radius}</span>
+                <span style={{ fontSize: 12, color: "var(--text-tertiary)" }}>{settings.borderRadius}px</span>
+              </div>
+              <input type="range" min={0} max={30} value={settings.borderRadius}
+                onChange={(e) => updateSettings({ borderRadius: Number(e.target.value) })}
+                style={{ width: "100%" }} />
+            </div>
+
+            {/* Animation speed */}
+            <div>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+                <Zap size={14} style={{ color: "var(--text-secondary)" }} />
+                <span style={{ fontSize: 13, color: "var(--text-primary)" }}>{tx.animSpeed}</span>
+              </div>
+              <div style={{ display: "flex", gap: 8 }}>
+                <GlassButton
+                  variant={settings.animationSpeed === "normal" ? "primary" : "secondary"}
+                  size="sm"
+                  onClick={() => updateSettings({ animationSpeed: "normal" })}
+                >
+                  {tx.animNormal}
+                </GlassButton>
+                <GlassButton
+                  variant={settings.animationSpeed === "fast" ? "primary" : "secondary"}
+                  size="sm"
+                  onClick={() => updateSettings({ animationSpeed: "fast" })}
+                >
+                  {tx.animFast}
+                </GlassButton>
+                <GlassButton
+                  variant={settings.animationSpeed === "off" ? "primary" : "secondary"}
+                  size="sm"
+                  onClick={() => updateSettings({ animationSpeed: "off" })}
+                >
+                  {tx.animOff}
+                </GlassButton>
+              </div>
+            </div>
           </div>
         </GlassCard>
       </div>
 
-
       {/* ── Window Behavior ── */}
       <div style={{ marginBottom: 24 }}>
-        <h2 style={{
-          fontSize: 11, fontWeight: 600, color: "var(--text-tertiary)", textTransform: "uppercase",
-          letterSpacing: "0.06em", marginBottom: 12, paddingLeft: 4,
-        }}>
-          <Sliders size={12} style={{ display: "inline", marginRight: 6, verticalAlign: "middle" }} />
+        <h2 className="section-title" style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 12, paddingLeft: 4 }}>
+          <Layout size={12} style={{ display: "inline", verticalAlign: "middle" }} />
           {tx.windowBehavior}
         </h2>
         <GlassCard>
-          <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-            <ToggleRow icon={<Layout size={14} />} label={tx.rememberSize}
-              active={settings.rememberSize} onChange={(v) => updateSettings({ rememberSize: v })}
-            />
-            <ToggleRow icon={<Layout size={14} />} label={tx.rememberPos}
-              active={settings.rememberPosition} onChange={(v) => updateSettings({ rememberPosition: v })}
-            />
+          <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+            <ToggleRow icon={<Zap size={14} />} label={tx.autoStart} active={(settings as any).autoStart ?? false} onChange={(v) => updateSettings({ autoStart: v } as any)} />
+            <ToggleRow icon={<Layout size={14} />} label={tx.minToTray} active={(settings as any).minimizeToTray ?? false} onChange={(v) => updateSettings({ minimizeToTray: v } as any)} />
+            <ToggleRow icon={<Layout size={14} />} label={tx.closeToTray} active={(settings as any).closeToTray ?? false} onChange={(v) => updateSettings({ closeToTray: v } as any)} />
+            <ToggleRow icon={<Zap size={14} />} label={tx.autoAdmin} active={(settings as any).autoAdmin ?? false} onChange={(v) => updateSettings({ autoAdmin: v } as any)} />
+            <ToggleRow icon={<Layout size={14} />} label={tx.rememberSize} active={settings.rememberSize} onChange={(v) => updateSettings({ rememberSize: v })} />
+            <ToggleRow icon={<Layout size={14} />} label={tx.rememberPos} active={settings.rememberPosition} onChange={(v) => updateSettings({ rememberPosition: v })} />
+          </div>
+        </GlassCard>
+      </div>
+
+      {/* ── Music Settings ── */}
+      <div style={{ marginBottom: 24 }}>
+        <h2 className="section-title" style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 12, paddingLeft: 4 }}>
+          <Sliders size={12} style={{ display: "inline", verticalAlign: "middle" }} />
+          {tx.musicSettings}
+        </h2>
+        <GlassCard>
+          <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+            <div>
+              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
+                <span style={{ fontSize: 12, color: "var(--text-secondary)" }}>{tx.defaultVol}</span>
+                <span style={{ fontSize: 12, color: "var(--text-tertiary)" }}>{localVolume}%</span>
+              </div>
+              <input type="range" min={0} max={100} value={localVolume}
+                onChange={(e) => onVolumeChange(Number(e.target.value))}
+                style={{ width: "100%" }} />
+            </div>
+            <ToggleRow icon={<Zap size={14} />} label={tx.autoResume} active={(settings as any).autoResume ?? false} onChange={(v) => updateSettings({ autoResume: v } as any)} />
+            <ToggleRow icon={<Zap size={14} />} label={tx.autoScan} active={(settings as any).autoScan ?? false} onChange={(v) => updateSettings({ autoScan: v } as any)} />
           </div>
         </GlassCard>
       </div>
 
       {/* ── Interface ── */}
       <div style={{ marginBottom: 24 }}>
-        <h2 style={{
-          fontSize: 11, fontWeight: 600, color: "var(--text-tertiary)", textTransform: "uppercase",
-          letterSpacing: "0.06em", marginBottom: 12, paddingLeft: 4,
-        }}>
-          <Type size={12} style={{ display: "inline", marginRight: 6, verticalAlign: "middle" }} />
+        <h2 className="section-title" style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 12, paddingLeft: 4 }}>
+          <Type size={12} style={{ display: "inline", verticalAlign: "middle" }} />
           {tx.interface}
         </h2>
         <GlassCard>
           <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-            <SliderRow icon={<Layout size={14} />} label={tx.sidebarWidth}
-              value={settings.sidebarWidth} min={180} max={320} unit="px"
-              onChange={(v) => updateSettings({ sidebarWidth: v })}
-            />
-            <SliderRow icon={<Type size={14} />} label={tx.fontScale}
-              value={settings.fontScale} min={80} max={150} unit="%"
-              onChange={(v) => updateSettings({ fontScale: v })}
-            />
-            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <motion.button
-                className={settings.compactMode === false && settings.fontScale === 120 ? "btn-primary" : "btn-secondary"}
-                onClick={() => updateSettings({ compactMode: false, fontScale: 120 })}
-                whileTap={{ scale: 0.94 }}
-                transition={{ type: "spring", stiffness: 500, damping: 25 }}
-                style={{ flex: 1, justifyContent: "center", fontSize: 12, padding: "8px 12px" }}>
-                {tx.large}
-              </motion.button>
-              <motion.button
-                className={settings.compactMode === false && settings.fontScale === 100 ? "btn-primary" : "btn-secondary"}
-                onClick={() => updateSettings({ compactMode: false, fontScale: 100 })}
-                whileTap={{ scale: 0.94 }}
-                transition={{ type: "spring", stiffness: 500, damping: 25 }}
-                style={{ flex: 1, justifyContent: "center", fontSize: 12, padding: "8px 12px" }}>
-                {tx.standard}
-              </motion.button>
-              <motion.button
-                className={settings.compactMode ? "btn-primary" : "btn-secondary"}
-                onClick={() => updateSettings({ compactMode: true, fontScale: 90 })}
-                whileTap={{ scale: 0.94 }}
-                transition={{ type: "spring", stiffness: 500, damping: 25 }}
-                style={{ flex: 1, justifyContent: "center", fontSize: 12, padding: "8px 12px" }}>
-                {tx.compact}
-              </motion.button>
+            {/* Sidebar Width */}
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <span style={{ fontSize: 13, color: "var(--text-primary)" }}>{tx.sidebarWidth}</span>
+              <div style={{ width: 140 }}>
+                <GlassSelect
+                  value={String(settings.sidebarWidth)}
+                  onChange={(v) => updateSettings({ sidebarWidth: Number(v) })}
+                  options={sidebarWidthOptions}
+                />
+              </div>
             </div>
+
+            {/* Font Scale */}
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <span style={{ fontSize: 13, color: "var(--text-primary)" }}>{tx.fontScale}</span>
+              <div style={{ width: 140 }}>
+                <GlassSelect
+                  value={String(settings.fontScale)}
+                  onChange={(v) => updateSettings({ fontScale: Number(v) })}
+                  options={fontScaleOptions}
+                />
+              </div>
+            </div>
+
+            {/* Compact toggle */}
+            <ToggleRow icon={<Layout size={14} />} label={tx.compact} active={settings.compactMode}
+              onChange={(v) => updateSettings({ compactMode: v, fontScale: v ? 90 : 100 })} />
           </div>
         </GlassCard>
       </div>
 
       {/* ── Language ── */}
       <div style={{ marginBottom: 24 }}>
-        <h2 style={{
-          fontSize: 11, fontWeight: 600, color: "var(--text-tertiary)", textTransform: "uppercase",
-          letterSpacing: "0.06em", marginBottom: 12, paddingLeft: 4,
-        }}>
-          <Globe size={12} style={{ display: "inline", marginRight: 6, verticalAlign: "middle" }} />
+        <h2 className="section-title" style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 12, paddingLeft: 4 }}>
+          <Globe size={12} style={{ display: "inline", verticalAlign: "middle" }} />
           {tx.language}
         </h2>
         <GlassCard>
           <div style={{ display: "flex", gap: 10 }}>
-            <motion.button className={lang === "zh" ? "btn-primary" : "btn-secondary"}
-              onClick={() => setLang("zh")} whileTap={{ scale: 0.94 }}
-              transition={{ type: "spring", stiffness: 500, damping: 25 }}
-              style={{ flex: 1, justifyContent: "center", padding: "10px 16px" }}>
-              <Globe size={14} style={{ marginRight: 6 }} />中文
-            </motion.button>
-            <motion.button className={lang === "en" ? "btn-primary" : "btn-secondary"}
-              onClick={() => setLang("en")} whileTap={{ scale: 0.94 }}
-              transition={{ type: "spring", stiffness: 500, damping: 25 }}
-              style={{ flex: 1, justifyContent: "center", padding: "10px 16px" }}>
-              <Globe size={14} style={{ marginRight: 6 }} />English
-            </motion.button>
+            <GlassButton variant={lang === "zh" ? "primary" : "secondary"}
+              onClick={() => setLang("zh")} size="md" inline={false}>
+              <Globe size={14} /> 中文
+            </GlassButton>
+            <GlassButton variant={lang === "en" ? "primary" : "secondary"}
+              onClick={() => setLang("en")} size="md" inline={false}>
+              <Globe size={14} /> English
+            </GlassButton>
           </div>
         </GlassCard>
       </div>
 
       {/* ── Reset ── */}
       <div style={{ marginBottom: 24 }}>
-        <motion.button className="btn-danger" onClick={handleReset}
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.95 }}
-          transition={{ type: "spring", stiffness: 400, damping: 20 }}
-          style={{ width: "100%", justifyContent: "center", padding: "12px 20px", display: "inline-flex", alignItems: "center", gap: 6 }}>
+        <GlassButton variant="danger" onClick={handleReset} inline={false} size="md"
+          style={{ width: "100%", justifyContent: "center", padding: "12px 20px" }}>
           <RotateCcw size={14} /> {tx.resetSettings}
-        </motion.button>
+        </GlassButton>
       </div>
 
       {/* ── About ── */}
@@ -518,34 +408,46 @@ export default function Settings() {
           <div>{tx.aboutTech}</div>
         </div>
         <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
-          <button className="btn-secondary" style={{ fontSize: 11, padding: "6px 14px" }}
+          <GlassButton variant="secondary" size="sm"
             onClick={() => window.electronAPI?.shell.openExternal("https://github.com/YOU5A")}>
             {tx.github}
-          </button>
-          <button className="btn-secondary" style={{ fontSize: 11, padding: "6px 14px" }}
+          </GlassButton>
+          <GlassButton variant="secondary" size="sm"
             onClick={() => window.electronAPI?.shell.openExternal("https://space.bilibili.com/353017137")}>
-            {tx.bilibili}
-          </button>
-          <button className="btn-secondary" style={{ fontSize: 11, padding: "6px 14px" }}
+            {tx.bilibli}
+          </GlassButton>
+          <GlassButton variant="secondary" size="sm"
             onClick={() => window.electronAPI?.shell.openExternal("https://you5a.github.io/UserTool")}>
             {tx.usertool}
-          </button>
+          </GlassButton>
         </div>
       </GlassCard>
-    </motion.div>
-  );
-}
 
-function ToggleRow({ icon, label, active, onChange }: {
-  icon: React.ReactNode; label: string; active: boolean; onChange: (v: boolean) => void;
-}) {
-  return (
-    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-        <span style={{ color: "var(--text-secondary)" }}>{icon}</span>
-        <span style={{ fontSize: 13, color: "var(--text-primary)" }}>{label}</span>
-      </div>
-      <Toggle active={active} onClick={() => onChange(!active)} />
-    </div>
+      {/* ── Theme Picker Modal ── */}
+      <GlassModal open={themePickerOpen} onClose={() => setThemePickerOpen(false)} maxWidth={360}>
+        <h3 style={{
+          fontSize: 16, fontWeight: 600, color: "var(--text-primary)",
+          margin: 0, letterSpacing: "-0.01em",
+        }}>
+          {tx.themeLabel}
+        </h3>
+        <div style={{
+          display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8,
+        }}>
+          {themeDropdownOptions.map((opt) => (
+            <GlassButton
+              key={opt.value}
+              variant={theme === opt.value ? "primary" : "secondary"}
+              size="sm"
+              inline={false}
+              onClick={() => { setTheme(opt.value); setThemePickerOpen(false); }}
+            >
+              {opt.icon}
+              {opt.key.charAt(0).toUpperCase() + opt.key.slice(1)}
+            </GlassButton>
+          ))}
+        </div>
+      </GlassModal>
+    </motion.div>
   );
 }

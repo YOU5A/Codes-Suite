@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
 import { RefreshCw, Save, RotateCcw, Trash2, FolderOpen } from "lucide-react";
 import GlassCard from "@/components/GlassCard";
+import { GlassButton, GlassInput } from "@/design-system";
 import { useToast } from "@/contexts/ToastContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useConfirm } from "@/contexts/ConfirmContext";
@@ -276,9 +277,9 @@ export default function Win32Priority(_props: Props) {
         <h2 style={{ fontSize: 20, fontWeight: 600, color: "var(--text-primary)", margin: 0 }}>
           {tx.title}
         </h2>
-        <button className="btn-secondary" onClick={() => { fetchValue(); fetchBackups(); }} style={{ padding: "6px 14px", fontSize: 12 }}>
+        <GlassButton variant="secondary" onClick={() => { fetchValue(); fetchBackups(); }} style={{ padding: "6px 14px", fontSize: 12 }}>
           <RefreshCw size={14} /> {tx.refresh}
-        </button>
+        </GlassButton>
       </div>
 
       {/* Current Value */}
@@ -377,12 +378,12 @@ export default function Win32Priority(_props: Props) {
               }
             }}
           />
-          <button className="btn-primary" onClick={() => {
+          <GlassButton variant="primary" onClick={() => {
             const v = parseValue(customValue);
             if (v !== null) applyValue(v);
           }} disabled={applying}>
             <Save size={14} /> {tx.apply}
-          </button>
+          </GlassButton>
         </div>
       </GlassCard>
 
@@ -391,16 +392,16 @@ export default function Win32Priority(_props: Props) {
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
           <h3 style={{ fontSize: 13, fontWeight: 700, color: "var(--text-secondary)", textTransform: "uppercase", letterSpacing: "0.04em" }}>{tx.backups}</h3>
           <div style={{ display: "flex", gap: 8 }}>
-            <button className="btn-secondary" onClick={createBackup} style={{ padding: "6px 14px", fontSize: 12 }}>
+            <GlassButton variant="secondary" onClick={createBackup} style={{ padding: "6px 14px", fontSize: 12 }}>
               <Save size={12} /> {tx.createBackup}
-            </button>
-            <button className="btn-secondary" onClick={openBackupDir} style={{ padding: "6px 14px", fontSize: 12 }}>
+            </GlassButton>
+            <GlassButton variant="secondary" onClick={openBackupDir} style={{ padding: "6px 14px", fontSize: 12 }}>
               <FolderOpen size={12} /> {tx.openDir}
-            </button>
+            </GlassButton>
             {backups.length > 0 && (
-              <button className="btn-secondary" onClick={clearAllBackups} style={{ padding: "6px 14px", fontSize: 12, color: "var(--danger-color, #e74c3c)" }}>
+              <GlassButton variant="secondary" onClick={clearAllBackups} style={{ padding: "6px 14px", fontSize: 12, color: "var(--danger-color, #e74c3c)" }}>
                 <Trash2 size={12} /> {tx.clearAll}
-              </button>
+              </GlassButton>
             )}
           </div>
         </div>
@@ -421,12 +422,12 @@ export default function Win32Priority(_props: Props) {
                   </div>
                 </div>
                 <div style={{ display: "flex", gap: 6 }}>
-                  <button className="btn-secondary" onClick={() => restoreBackup(bp)} style={{ padding: "5px 12px", fontSize: 11 }}>
+                  <GlassButton variant="secondary" onClick={() => restoreBackup(bp)} style={{ padding: "5px 12px", fontSize: 11 }}>
                     <RotateCcw size={11} /> {tx.restore}
-                  </button>
-                  <button className="btn-secondary" onClick={() => deleteBackup(bp)} style={{ padding: "5px 12px", fontSize: 11 }}>
+                  </GlassButton>
+                  <GlassButton variant="secondary" onClick={() => deleteBackup(bp)} style={{ padding: "5px 12px", fontSize: 11 }}>
                     <Trash2 size={11} /> {tx.delete}
-                  </button>
+                  </GlassButton>
                 </div>
               </div>
             ))}

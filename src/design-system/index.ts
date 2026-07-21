@@ -69,6 +69,8 @@ export {
   GlassButton,
   GlassInput,
   GlassModal,
+  GlassSelect,
+  GlassToggle,
 } from './components';
 export type {
   GlassSurfaceProps,
@@ -79,6 +81,9 @@ export type {
   ButtonSize,
   GlassInputProps,
   GlassModalProps,
+  GlassSelectProps,
+  SelectOption,
+  GlassToggleProps,
 } from './components';
 
 /* ─── Layouts ─── */

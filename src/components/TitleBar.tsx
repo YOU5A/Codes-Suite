@@ -1,5 +1,5 @@
-﻿import { Minus, Square, X, Copy } from "lucide-react";
-import { GlassSurface } from "@/design-system";
+import { Minus, Square, X, Copy } from "lucide-react";
+import { GlassSurface, GlassButton } from "@/design-system";
 
 interface TitleBarProps {
   isMaximized: boolean;
@@ -48,18 +48,23 @@ export default function TitleBar({ isMaximized, onToggleMaximize }: TitleBarProp
       </div>
 
       <div style={{ display: "flex", alignItems: "center", gap: 2, ...noDragStyle }}>
-        <button className="btn-icon" onClick={() => window.electronAPI?.window.minimize()} style={{ borderRadius: 6 }} aria-label="Minimize">
+        <GlassButton variant="ghost" size="sm" onClick={() => window.electronAPI?.window.minimize()}
+          style={{ width: 32, height: 32, minWidth: 32, padding: 0, borderRadius: 6, justifyContent: "center" }}
+          aria-label="Minimize">
           <Minus size={14} strokeWidth={2} />
-        </button>
-        <button className="btn-icon" onClick={onToggleMaximize} style={{ borderRadius: 6 }} aria-label={isMaximized ? "Restore" : "Maximize"}>
+        </GlassButton>
+        <GlassButton variant="ghost" size="sm" onClick={onToggleMaximize}
+          style={{ width: 32, height: 32, minWidth: 32, padding: 0, borderRadius: 6, justifyContent: "center" }}
+          aria-label={isMaximized ? "Restore" : "Maximize"}>
           {isMaximized ? <Copy size={12} strokeWidth={2} /> : <Square size={12} strokeWidth={2} />}
-        </button>
-        <button className="btn-icon" onClick={() => window.electronAPI?.window.close()} style={{ borderRadius: 6 }} aria-label="Close"
+        </GlassButton>
+        <GlassButton variant="ghost" size="sm" onClick={() => window.electronAPI?.window.close()}
+          style={{ width: 32, height: 32, minWidth: 32, padding: 0, borderRadius: 6, justifyContent: "center" }}
+          aria-label="Close"
           onMouseEnter={(e) => { e.currentTarget.style.background = "var(--danger)"; e.currentTarget.style.color = "white"; }}
-          onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "var(--text-secondary)"; }}
-        >
+          onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "var(--text-secondary)"; }}>
           <X size={14} strokeWidth={2} />
-        </button>
+        </GlassButton>
       </div>
     </GlassSurface>
   );

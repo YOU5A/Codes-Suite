@@ -1,11 +1,10 @@
-﻿import { motion } from "framer-motion";
-import { springSnappy } from "@/design-system";
+import { motion } from "framer-motion";
+import { springSnappy, GlassSurface, GlassButton } from "@/design-system";
 import {
   LayoutDashboard, Cpu, Gauge, Music, Database, Settings,
 } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useTheme } from "@/hooks/useTheme";
-import { GlassSurface } from "@/design-system";
 import type { Page, Language } from "@/types";
 
 interface SidebarProps {
@@ -15,12 +14,12 @@ interface SidebarProps {
 
 const navLabels: Record<Language, Record<Page, string>> = {
   zh: {
-    dashboard: "\u4eea\u8868\u76d8",
-    win32priority: "Win32 \u4f18\u5148\u7ea7",
-    appcpupriority: "\u5e94\u7528 CPU \u4f18\u5148\u7ea7",
-    musicmanager: "\u97f3\u4e50\u7ba1\u7406\u5668",
-    backupcenter: "\u5907\u4efd\u4e2d\u5fc3",
-    settings: "\u8bbe\u7f6e",
+    dashboard: "仪表盘",
+    win32priority: "Win32 优先级",
+    appcpupriority: "应用 CPU 优先级",
+    musicmanager: "音乐管理器",
+    backupcenter: "备份中心",
+    settings: "设置",
   },
   en: {
     dashboard: "Dashboard",
@@ -68,31 +67,26 @@ export default function Sidebar({ currentPage, onNavigate }: SidebarProps) {
       {navItems.map((item) => {
         const isActive = currentPage === item.id;
         return (
-          <motion.button
+          <GlassButton
             key={item.id}
+            variant="ghost"
+            size="sm"
+            inline={false}
             onClick={() => onNavigate(item.id)}
-            whileTap={{ scale: 0.97 }}
-            transition={springSnappy}
             style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 10,
-              padding: settings.compactMode ? "8px 10px" : "10px 14px",
-              border: "none",
-              borderRadius: 10,
-              cursor: "pointer",
-              fontSize: settings.compactMode ? 12 : 13,
-              fontWeight: isActive ? 500 : 400,
+              justifyContent: "flex-start",
               color: isActive ? "var(--accent)" : "var(--text-secondary)",
+              fontWeight: isActive ? 500 : 400,
               background: isActive ? "var(--accent-bg)" : "transparent",
-              transition: "all var(--transition-fast) ease",
-              textAlign: "left",
+              borderRadius: 10,
+              padding: settings.compactMode ? "8px 10px" : "10px 14px",
+              fontSize: settings.compactMode ? 12 : 13,
               width: "100%",
             }}
           >
             {item.icon}
             <span>{navLabels[lang][item.id]}</span>
-          </motion.button>
+          </GlassButton>
         );
       })}
 

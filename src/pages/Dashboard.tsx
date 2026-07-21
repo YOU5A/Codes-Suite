@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Cpu, MemoryStick, HardDrive, Monitor, Activity, Clock, Database, ArrowRight, Music } from "lucide-react";
 import GlassCard from "@/components/GlassCard";
+import { GlassButton } from "@/design-system";
 import { getActivities, type ActivityEntry } from "@/hooks/useActivityLog";
 import { useLanguage } from "@/contexts/LanguageContext";
 import type { SystemInfo, BackupEntry, Language } from "@/types";
@@ -314,10 +315,10 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
                 </div>
               ))}
               {backups.length >= 5 && (
-                <button className="btn-secondary" onClick={() => onNavigate("backupcenter")}
+                <GlassButton variant="secondary" size="sm" onClick={() => onNavigate("backupcenter")}
                   style={{ fontSize: 11, padding: "6px 12px", alignSelf: "center", marginTop: 4 }}>
                   {tx.viewAll}
-                </button>
+                </GlassButton>
               )}
             </div>
           )}

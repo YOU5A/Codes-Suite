@@ -1,10 +1,11 @@
-﻿import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import {
   FolderOpen, Search, Save, Image, X, Play, Pause, Square,
   Volume2, Trash2, Music, Edit3
 } from "lucide-react";
 import GlassCard from "@/components/GlassCard";
+import { GlassButton, GlassInput } from "@/design-system";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useToast } from "@/contexts/ToastContext";
 import type { MusicMetadata, PlaybackState } from "@/types";
@@ -334,12 +335,12 @@ export default function MusicManager() {
           {tx.title}
         </h1>
         <div style={{ flex: 1 }} />
-        <button className="btn-primary" onClick={browse} style={{ padding: "7px 16px", fontSize: 12 }}>
+        <GlassButton variant="primary" onClick={browse} style={{ padding: "7px 16px", fontSize: 12 }}>
           <FolderOpen size={13} /> {tx.browse}
-        </button>
-        <button className="btn-secondary" onClick={() => doScan()} style={{ padding: "7px 16px", fontSize: 12 }}>
+        </GlassButton>
+        <GlassButton variant="secondary" onClick={() => doScan()} style={{ padding: "7px 16px", fontSize: 12 }}>
           <Search size={13} /> {tx.scan}
-        </button>
+        </GlassButton>
       </div>
 
       {/* ── Empty State ── */}
@@ -370,15 +371,15 @@ export default function MusicManager() {
                 </div>
               </GlassCard>
               <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                <button className="btn-secondary" onClick={pickCover} style={{ padding: "6px 12px", fontSize: 11, justifyContent: "center", width: "100%" }}>
+                <GlassButton variant="secondary" onClick={pickCover} style={{ padding: "6px 12px", fontSize: 11, justifyContent: "center", width: "100%" }}>
                   <Image size={11} /> {tx.selectCover}
-                </button>
-                <button className="btn-secondary" onClick={applyCover} style={{ padding: "6px 12px", fontSize: 11, justifyContent: "center", width: "100%" }}>
+                </GlassButton>
+                <GlassButton variant="secondary" onClick={applyCover} style={{ padding: "6px 12px", fontSize: 11, justifyContent: "center", width: "100%" }}>
                   {tx.applyCover}
-                </button>
-                <button className="btn-secondary" onClick={removeCover} style={{ padding: "6px 12px", fontSize: 11, justifyContent: "center", width: "100%" }}>
+                </GlassButton>
+                <GlassButton variant="secondary" onClick={removeCover} style={{ padding: "6px 12px", fontSize: 11, justifyContent: "center", width: "100%" }}>
                   <Trash2 size={11} /> {tx.removeCover}
-                </button>
+                </GlassButton>
               </div>
               {/* Cover Preview */}
               {coverPreviewB64 && (
@@ -400,45 +401,45 @@ export default function MusicManager() {
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8 }}>
                   <div>
                     <label style={{ fontSize: 10, color: "var(--text-tertiary)", display: "block", marginBottom: 2 }}>{tx.title_}</label>
-                    <input className="input-field" value={tagTitle} onChange={e => setTagTitle(e.target.value)} style={{ fontSize: 12, padding: "5px 8px" }} />
+                    <GlassInput value={tagTitle} onChange={e => setTagTitle(e.target.value)} style={{ fontSize: 12, padding: "5px 8px" }} />
                   </div>
                   <div>
                     <label style={{ fontSize: 10, color: "var(--text-tertiary)", display: "block", marginBottom: 2 }}>{tx.artist}</label>
-                    <input className="input-field" value={tagArtist} onChange={e => setTagArtist(e.target.value)} style={{ fontSize: 12, padding: "5px 8px" }} />
+                    <GlassInput value={tagArtist} onChange={e => setTagArtist(e.target.value)} style={{ fontSize: 12, padding: "5px 8px" }} />
                   </div>
                   <div>
                     <label style={{ fontSize: 10, color: "var(--text-tertiary)", display: "block", marginBottom: 2 }}>{tx.album}</label>
-                    <input className="input-field" value={tagAlbum} onChange={e => setTagAlbum(e.target.value)} style={{ fontSize: 12, padding: "5px 8px" }} />
+                    <GlassInput value={tagAlbum} onChange={e => setTagAlbum(e.target.value)} style={{ fontSize: 12, padding: "5px 8px" }} />
                   </div>
                   <div>
                     <label style={{ fontSize: 10, color: "var(--text-tertiary)", display: "block", marginBottom: 2 }}>{tx.year}</label>
-                    <input className="input-field" value={tagYear} onChange={e => setTagYear(e.target.value)} style={{ fontSize: 12, padding: "5px 8px" }} />
+                    <GlassInput value={tagYear} onChange={e => setTagYear(e.target.value)} style={{ fontSize: 12, padding: "5px 8px" }} />
                   </div>
                   <div style={{ display: "flex", alignItems: "flex-end", gap: 6, justifyContent: "flex-end", gridColumn: "span 2" }}>
-                    <button className="btn-primary" onClick={saveTags} disabled={saving} style={{ padding: "7px 14px", fontSize: 12, whiteSpace: "nowrap" }}>
+                    <GlassButton variant="primary" onClick={saveTags} disabled={saving} style={{ padding: "7px 14px", fontSize: 12, whiteSpace: "nowrap" }}>
                       <Save size={13} /> {tx.saveTags}
-                    </button>
-                    <button className="btn-danger" onClick={() => { setTagTitle(""); setTagArtist(""); setTagAlbum(""); setTagYear(""); }}
+                    </GlassButton>
+                    <GlassButton variant="danger" onClick={() => { setTagTitle(""); setTagArtist(""); setTagAlbum(""); setTagYear(""); }}
                       style={{ padding: "7px 14px", fontSize: 12, whiteSpace: "nowrap" }}>
                       <X size={13} /> {tx.clearTags}
-                    </button>
-                    <button className="btn-secondary" onClick={applyAll} disabled={saving} style={{ padding: "7px 14px", fontSize: 12, whiteSpace: "nowrap" }}>
+                    </GlassButton>
+                    <GlassButton variant="secondary" onClick={applyAll} disabled={saving} style={{ padding: "7px 14px", fontSize: 12, whiteSpace: "nowrap" }}>
                       {tx.applyAll}
-                    </button>
+                    </GlassButton>
                   </div>
                 </div>
                 <div style={{ marginTop: 8, display: "flex", gap: 6, alignItems: "center" }}>
-                  <input className="input-field"
+                  <GlassInput
                     value={renameName}
                     onChange={e => setRenameName(e.target.value)}
                     placeholder={lang === "zh" ? "????..." : "Rename..."}
                     style={{ flex: 1, fontSize: 12, padding: "5px 8px" }} />
-                  <button className="btn-secondary" onClick={renameOne} style={{ padding: "4px 6px", fontSize: 10, whiteSpace: "nowrap" }}>
+                  <GlassButton variant="secondary" onClick={renameOne} style={{ padding: "4px 6px", fontSize: 10, whiteSpace: "nowrap" }}>
                     <Edit3 size={11} /> {tx.renameSelected}
-                  </button>
-                  <button className="btn-secondary" onClick={renameAll} style={{ padding: "5px 10px", fontSize: 11, whiteSpace: "nowrap" }}>
+                  </GlassButton>
+                  <GlassButton variant="secondary" onClick={renameAll} style={{ padding: "5px 10px", fontSize: 11, whiteSpace: "nowrap" }}>
                     {tx.renameAll}
-                  </button>
+                  </GlassButton>
                 </div>
               </GlassCard>
 

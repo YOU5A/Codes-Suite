@@ -4,11 +4,11 @@
  * Full-screen overlay with centered glass panel.
  * Uses elevated glass tier for maximum visual weight.
  * Includes backdrop blur on overlay and glass pop-in animation.
- *
- * Replaces inline modal styling in ConfirmDialog.
+ * Rendered via React Portal to document.body for full-screen blur coverage.
  */
 
 import { type ReactNode, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import type { Transition, Variants } from "framer-motion";
 import { GlassSurface } from "./GlassSurface";
@@ -17,21 +17,14 @@ import { space, zLayers } from "../tokens";
 
 export interface GlassModalProps {
   children?: ReactNode;
-  /** Whether the modal is visible */
   open: boolean;
-  /** Called when backdrop is clicked or Escape pressed */
   onClose?: () => void;
-  /** Max width of the modal panel */
   maxWidth?: number | string;
-  /** Disable backdrop click to close */
   disableBackdropClose?: boolean;
-  /** Disable Escape key to close */
   disableEscapeClose?: boolean;
-  /** Disable entry/exit animation */
   noAnimation?: boolean;
 }
 
-/* ── Backdrop Variants ── */
 const backdropVariants: Variants = {
   hidden: { opacity: 0 },
   visible: {
@@ -62,7 +55,15 @@ export function GlassModal({
     return () => window.removeEventListener("keydown", handler);
   }, [open, disableEscapeClose, onClose]);
 
-  return (
+  useEffect(() => {
+    if (open) {
+      const prev = document.body.style.overflow;
+      document.body.style.overflow = "hidden";
+      return () => { document.body.style.overflow = prev; };
+    }
+  }, [open]);
+
+  const modalContent = (
     <AnimatePresence>
       {open && (
         <motion.div
@@ -78,8 +79,10 @@ export function GlassModal({
             alignItems: "center",
             justifyContent: "center",
             background: "rgba(0,0,0,0.35)",
-            backdropFilter: "blur(4px)",
-            WebkitBackdropFilter: "blur(4px)",
+            backdropFilter: "blur(12px) saturate(180%)",
+            WebkitBackdropFilter: "blur(12px) saturate(180%)",
+            borderRadius: "var(--radius)",
+            overflow: "hidden",
           }}
           onClick={disableBackdropClose ? undefined : onClose}
         >
@@ -111,6 +114,8 @@ export function GlassModal({
       )}
     </AnimatePresence>
   );
+
+  return createPortal(modalContent, document.body);
 }
 
 export default GlassModal;

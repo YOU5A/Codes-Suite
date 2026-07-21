@@ -5,6 +5,12 @@ Codes-Suite Liquid Glass UI Rewrite Agent Manual
 
 https://github.com/YOU5A/Codes-Suite
 
+参考项目：
+
+https://github.com/rdev/liquid-glass-react
+
+https://github.com/AndrewPrifer/liquid-dom
+
 目标：
 
 将整个 UI 系统升级为：

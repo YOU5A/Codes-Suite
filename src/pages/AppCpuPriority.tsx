@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Plus, Pencil, Trash2, RefreshCw, Upload, Download } from "lucide-react";
 import GlassCard from "@/components/GlassCard";
+import { GlassButton, GlassInput, GlassModal, GlassSelect } from "@/design-system";
 import { useToast } from "@/contexts/ToastContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useConfirm } from "@/contexts/ConfirmContext";
@@ -345,18 +346,18 @@ export default function AppCpuPriority(_props: Props) {
           <p style={{ fontSize: 12, color: "var(--text-tertiary)", margin: "4px 0 0" }}>{tx.subtitle}</p>
         </div>
         <div style={{ display: "flex", gap: 8 }}>
-          <button className="btn-primary" onClick={() => openDialog()} style={{ padding: "8px 16px", fontSize: 13 }}>
+          <GlassButton variant="primary" onClick={() => openDialog()} style={{ padding: "8px 16px", fontSize: 13 }}>
             <Plus size={14} /> {tx.add}
-          </button>
-          <button className="btn-secondary" onClick={fetchRules} style={{ padding: "8px 12px", fontSize: 13 }}>
+          </GlassButton>
+          <GlassButton variant="secondary" onClick={fetchRules} style={{ padding: "8px 12px", fontSize: 13 }}>
             <RefreshCw size={14} />
-          </button>
-          <button className="btn-secondary" onClick={exportConfig} style={{ padding: "8px 14px", fontSize: 13 }}>
+          </GlassButton>
+          <GlassButton variant="secondary" onClick={exportConfig} style={{ padding: "8px 14px", fontSize: 13 }}>
             <Download size={14} /> {tx.export}
-          </button>
-          <button className="btn-secondary" onClick={importConfig} style={{ padding: "8px 14px", fontSize: 13 }}>
+          </GlassButton>
+          <GlassButton variant="secondary" onClick={importConfig} style={{ padding: "8px 14px", fontSize: 13 }}>
             <Upload size={14} /> {tx.import}
-          </button>
+          </GlassButton>
         </div>
       </div>
 
