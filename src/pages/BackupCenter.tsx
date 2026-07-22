@@ -130,12 +130,12 @@ export default function BackupCenter(_props: Props) {
     <motion.div
       animate={{ opacity: 1 }}
       transition={{ duration: animationDuration, ease: EASE_OUT }}
-      style={{ maxWidth: 800, margin: "0 auto", width: "100%" }}
+      style={{ height: "100%", display: "flex", flexDirection: "column", width: "100%" }}
     >
       {/* Title + Toolbar */}
       <div style={{
         display: "flex", justifyContent: "space-between", alignItems: "center",
-        marginBottom: space[6],
+        marginBottom: space[6], flexShrink: 0,
       }}>
         <div style={{ display: "flex", alignItems: "center", gap: space[2] }}>
           <h1 style={{ fontSize: fontSizes["2xl"], fontWeight: 600, color: "var(--text-primary)", margin: 0 }}>
@@ -168,7 +168,7 @@ export default function BackupCenter(_props: Props) {
         />
       ) : (
         /* Backup List */
-        <div style={{ display: "flex", flexDirection: "column", gap: space[3] }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: space[3], flex: 1, overflowY: "auto", minHeight: 0 }}>
           {backups.map((bp) => (
             <GlassCard
               key={bp.filename}

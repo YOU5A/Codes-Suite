@@ -270,42 +270,66 @@ export default function Win32Priority(_props: Props) {
             gap: space[2],
           }}
         >
-          {presetData.map((p) => (
-            <GlassCard
-              key={p.hex}
-              onClick={() => setCustomValue(p.hex)}
-              noHover={registry?.hex?.toUpperCase() === p.hex}
-              style={{
-                padding: `${space[3]}px ${space[4]}px`,
-                cursor: registry?.hex?.toUpperCase() === p.hex ? "default" : "pointer",
-                background: registry?.hex?.toUpperCase() === p.hex ? "var(--accent-bg)" : undefined,
-                border: registry?.hex?.toUpperCase() === p.hex ? "1.5px solid rgba(var(--accent-rgb), 0.5)" : undefined,
-                boxShadow: registry?.hex?.toUpperCase() === p.hex ? "0 0 20px rgba(var(--accent-rgb), 0.12)" : undefined,
-              }}
-            >
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 4 }}>
-                <span style={{ fontSize: fontSizes.lg, fontWeight: 600, color: "var(--accent)", fontFamily: "monospace" }}>
-                  0x{p.hex}
-                </span>
-                {p.effect && (
-                  <GlassBadge variant="accent" size="sm">
-                    {effectLabel[p.effect]?.[lang] ?? p.effect}
-                  </GlassBadge>
-                )}
-              </div>
-              <div style={{ display: "flex", gap: space[2], flexWrap: "wrap" }}>
-                <span style={{ fontSize: fontSizes.xs, color: "var(--text-tertiary)" }}>
-                  {aaLabel[lang][p.aa]}
-                </span>
-                <span style={{ fontSize: fontSizes.xs, color: "var(--text-tertiary)" }}>
-                  {bbLabel[lang][p.bb]}
-                </span>
-                <span style={{ fontSize: fontSizes.xs, color: "var(--text-tertiary)" }}>
-                  {ccLabel[lang][p.cc]}
-                </span>
-              </div>
-            </GlassCard>
-          ))}
+          {presetData.map((p) => {
+            const isActive = registry?.hex?.toUpperCase() === p.hex;
+            return (
+              <motion.div
+                key={p.hex}
+                onClick={() => setCustomValue(p.hex)}
+                whileHover={
+                  isActive
+                    ? undefined
+                    : {
+                        scale: 1.03,
+                        background: "var(--bg-elevated)",
+                        boxShadow: "0 0 24px rgba(var(--accent-rgb), 0.18), 0 4px 16px rgba(0,0,0,0.08)",
+                      }
+                }
+                whileTap={isActive ? undefined : { scale: 0.97 }}
+                animate={
+                  isActive
+                    ? {
+                        background: "var(--accent-bg)",
+                        boxShadow: "0 0 20px rgba(var(--accent-rgb), 0.14)",
+                      }
+                    : {
+                        background: "var(--bg-secondary)",
+                        boxShadow: "none",
+                      }
+                }
+                transition={{ type: "tween", duration: 0.2, ease: "easeOut" }}
+                style={{
+                  padding: `${space[3]}px ${space[4]}px`,
+                  borderRadius: radii.lg,
+                  cursor: isActive ? "default" : "pointer",
+                  border: "none",
+                  userSelect: "none",
+                }}
+              >
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 4 }}>
+                  <span style={{ fontSize: fontSizes.lg, fontWeight: 600, color: "var(--accent)", fontFamily: "monospace" }}>
+                    0x{p.hex}
+                  </span>
+                  {p.effect && (
+                    <GlassBadge variant="accent" size="sm">
+                      {effectLabel[p.effect]?.[lang] ?? p.effect}
+                    </GlassBadge>
+                  )}
+                </div>
+                <div style={{ display: "flex", gap: space[2], flexWrap: "wrap" }}>
+                  <span style={{ fontSize: fontSizes.xs, color: "var(--text-tertiary)" }}>
+                    {aaLabel[lang][p.aa]}
+                  </span>
+                  <span style={{ fontSize: fontSizes.xs, color: "var(--text-tertiary)" }}>
+                    {bbLabel[lang][p.bb]}
+                  </span>
+                  <span style={{ fontSize: fontSizes.xs, color: "var(--text-tertiary)" }}>
+                    {ccLabel[lang][p.cc]}
+                  </span>
+                </div>
+              </motion.div>
+            );
+          })}
         </div>
       </GlassCard>
 

@@ -475,11 +475,14 @@ export default function MusicManager() {
               </GlassCard>
 
               {/* File List */}
-              <GlassCard style={{ flex: 1, minHeight: 0, padding: 0, overflow: "hidden" }}>
-                <div style={{
-                  height: "100%", overflowY: "auto",
-                  padding: space[2] + "px 0",
-                }}>
+              <GlassCard style={{ flex: 1, minHeight: 0, padding: 0, overflow: "hidden", display: "flex", flexDirection: "column" }}>
+                <div
+                  className="music-file-list-scroll"
+                  style={{
+                    flex: 1, overflowY: "auto", overflowX: "hidden",
+                    padding: space[2] + "px 0",
+                  }}
+                >
                   {files.map((fp: string) => {
                     const name = fp.split("\\").pop() || fp;
                     const active = fp === selectedFile;

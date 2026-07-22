@@ -36,3 +36,6 @@ export type { GlassBadgeProps, BadgeVariant } from "./GlassBadge";
 
 export { GlassEmptyState } from "./GlassEmptyState";
 export type { GlassEmptyStateProps } from "./GlassEmptyState";
+
+export { GlassGlow } from "./GlassGlow";
+export type { GlassGlowProps } from "./GlassGlow";

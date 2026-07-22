@@ -74,6 +74,7 @@ export {
   GlassProgressBar,
   GlassBadge,
   GlassEmptyState,
+  GlassGlow,
 } from './components';
 export type {
   GlassSurfaceProps,
@@ -92,6 +93,7 @@ export type {
   GlassBadgeProps,
   BadgeVariant,
   GlassEmptyStateProps,
+  GlassGlowProps,
 } from './components';
 
 /* ─── Layouts ─── */

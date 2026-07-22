@@ -1,26 +1,22 @@
-/**
+﻿/**
  * GlassToggle — Liquid Glass Toggle Switch
  *
  * Apple-style toggle switch with glass styling.
- * Replaces the inline toggle in Settings page.
+ * Uses flexbox centering — no absolute positioning drift.
  */
 
 import { motion } from "framer-motion";
 
 export interface GlassToggleProps {
-  /** Current state */
   active: boolean;
-  /** Change handler */
   onChange: (active: boolean) => void;
-  /** Disabled */
   disabled?: boolean;
-  /** Size: sm | md (default) */
   size?: "sm" | "md";
 }
 
 const sizeConfig = {
-  sm: { width: 36, height: 20, radius: 10, knob: 14, knobOffset: 2 },
-  md: { width: 44, height: 26, radius: 13, knob: 20, knobOffset: 3 },
+  sm: { width: 36, height: 20, radius: 10, knob: 14, pad: 2 },
+  md: { width: 44, height: 26, radius: 13, knob: 20, pad: 3 },
 };
 
 export function GlassToggle({
@@ -30,6 +26,7 @@ export function GlassToggle({
   size = "md",
 }: GlassToggleProps) {
   const cfg = sizeConfig[size];
+  const knobTravel = cfg.width - cfg.knob - 2 * cfg.pad;
 
   return (
     <div
@@ -44,31 +41,32 @@ export function GlassToggle({
         }
       }}
       style={{
+        display: "flex",
+        alignItems: "center",
         width: cfg.width,
         height: cfg.height,
         borderRadius: cfg.radius,
-        position: "relative",
+        padding: `0 ${cfg.pad}px`,
         cursor: disabled ? "not-allowed" : "pointer",
         flexShrink: 0,
+        boxSizing: "border-box",
         background: active ? "var(--accent)" : "var(--bg-tertiary)",
-        border: active ? "none" : "1px solid var(--border-color)",
+        border: "1px solid",
+        borderColor: active ? "transparent" : "var(--border-color)",
         transition: "background var(--transition-fast) ease, border-color var(--transition-fast) ease",
         opacity: disabled ? 0.5 : 1,
       }}
     >
       <motion.div
-        animate={{
-          left: active ? cfg.width - cfg.knob - cfg.knobOffset : cfg.knobOffset,
-        }}
+        animate={{ x: active ? knobTravel : 0 }}
         transition={{ type: "spring", stiffness: 500, damping: 30, mass: 0.8 }}
         style={{
-          position: "absolute",
-          top: cfg.knobOffset,
           width: cfg.knob,
           height: cfg.knob,
           borderRadius: "50%",
           background: "white",
           boxShadow: "0 1px 3px rgba(0,0,0,0.2)",
+          flexShrink: 0,
         }}
       />
     </div>

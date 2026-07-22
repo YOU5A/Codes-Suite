@@ -1,10 +1,8 @@
-/**
- * GlassPanel — Full-Area Content Panel
+﻿/**
+ * GlassPanel - Full-Area Content Panel
  *
  * A large glass surface designed for main content areas.
- * Includes overflow scrolling, generous padding, and
- * optional border/separator styling. Uses the "thick"
- * material tier by default for prominent visual weight.
+ * Glass glow is handled internally by GlassSurface.
  */
 
 import { forwardRef, type ReactNode } from "react";
@@ -14,28 +12,21 @@ import { space } from "../tokens";
 
 export interface GlassPanelProps extends GlassSurfaceProps {
   children?: ReactNode;
-  /** Custom padding (default: 24px) */
   padding?: number;
-  /** Enable scroll within panel */
   scrollable?: boolean;
+  noGlow?: boolean;
 }
 
 export const GlassPanel = forwardRef<HTMLDivElement, GlassPanelProps>(
   function GlassPanel(
-    {
-      children,
-      tier = "thick",
-      padding = space[6],
-      scrollable = false,
-      style,
-      ...rest
-    },
+    { children, tier = "thick", padding = space[6], scrollable = false, noGlow = false, style, ...rest },
     ref
   ) {
     return (
       <GlassSurface
         ref={ref}
         tier={tier}
+        noGlow={noGlow}
         style={{
           padding,
           overflow: scrollable ? "auto" : "hidden",
