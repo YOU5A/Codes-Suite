@@ -101,7 +101,7 @@ function createWindow() {
     backgroundColor: "#00000000",
     titleBarStyle: "hidden",
     shadow: false,
-    icon: path.join(__dirname, "..", "icon.png"),
+    icon: path.join(__dirname, "..", "icon.ico"),
     show: false,
     webPreferences: {
       preload: path.join(__dirname, "preload.js"),
@@ -187,6 +187,7 @@ function setupIPC() {
     if (electronSettings.closeToTray && mainWindow && !isQuitting) {
       mainWindow.hide();
     } else {
+      isQuitting = true;
       mainWindow?.close();
     }
   });
@@ -262,20 +263,22 @@ function startPythonBridge() {
 // ---- Tray ----
 function createTray() {
   const iconPath = isDev
-    ? path.join(__dirname, "..", "icon.png")
-    : path.join(process.resourcesPath, "icon.png");
+    ? path.join(__dirname, "..", "icon.ico")
+    : path.join(process.resourcesPath, "icon.ico");
 
   tray = new Tray(iconPath);
+
+  const showWindow = () => {
+    if (!mainWindow) return;
+    if (mainWindow.isMinimized()) mainWindow.restore();
+    if (!mainWindow.isVisible()) mainWindow.show();
+    mainWindow.focus();
+  };
 
   const contextMenu = Menu.buildFromTemplate([
     {
       label: "Show Codes Suite",
-      click: () => {
-        if (mainWindow) {
-          mainWindow.show();
-          mainWindow.focus();
-        }
-      },
+      click: () => showWindow(),
     },
     { type: "separator" },
     {
@@ -290,10 +293,15 @@ function createTray() {
   tray.setToolTip("Codes Suite");
   tray.setContextMenu(contextMenu);
 
-  // Double-click tray icon to show window
-  tray.on("double-click", () => {
-    if (mainWindow) {
-      mainWindow.isVisible() ? mainWindow.focus() : mainWindow.show();
+  // Single-click tray icon to toggle window visibility
+  tray.on("click", () => {
+    if (!mainWindow) return;
+    if (mainWindow.isVisible()) {
+      mainWindow.hide();
+    } else {
+      if (mainWindow.isMinimized()) mainWindow.restore();
+      mainWindow.show();
+      mainWindow.focus();
     }
   });
 }
