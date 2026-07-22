@@ -73,6 +73,7 @@ export default function Sidebar({ currentPage, onNavigate }: SidebarProps) {
             size="sm"
             inline={false}
             onClick={() => onNavigate(item.id)}
+            whileHover={isActive ? { background: "color-mix(in srgb, var(--accent) 20%, transparent)", color: "var(--accent)" } : undefined}
             style={{
               justifyContent: "flex-start",
               color: isActive ? "var(--accent)" : "var(--text-secondary)",
@@ -100,7 +101,7 @@ export default function Sidebar({ currentPage, onNavigate }: SidebarProps) {
           textAlign: "center",
         }}
       >
-        Codes Suite V1.1
+        Codes Suite V1.3
       </div>
     </GlassSurface>
   );

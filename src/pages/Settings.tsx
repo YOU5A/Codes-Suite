@@ -1,7 +1,7 @@
-﻿import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Sun, Moon, Monitor, Globe, Palette, Sliders,
+  Sun, Moon, Monitor, Globe, Palette,
   Layout, Type, Zap, Eye, RotateCcw
 } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -34,15 +34,9 @@ const t: Record<Language, Record<string, string>> = {
     animOff: "关闭",
     windowBehavior: "窗口行为",
     autoStart: "开机启动",
-    minToTray: "最小化到托盘",
     closeToTray: "关闭到托盘",
-    autoAdmin: "自动管理员模式",
     rememberSize: "记住窗口大小",
     rememberPos: "记住窗口位置",
-    musicSettings: "音乐设置",
-    defaultVol: "默认音量",
-    autoResume: "自动恢复播放",
-    autoScan: "自动扫描目录",
     interface: "界面设置",
     sidebarWidth: "侧边栏宽度",
     fontScale: "界面缩放",
@@ -53,7 +47,7 @@ const t: Record<Language, Record<string, string>> = {
     resetConfirm: "确定要恢复默认设置吗？",
     about: "关于",
     aboutTitle: "Codes Suite",
-    aboutVersion: "版本 1.1.0",
+    aboutVersion: "版本 1.3.0",
     aboutDesc: "统一 Windows 系统管理工具",
     aboutAuthor: "作者: Y0USA",
     aboutTech: "Electron + React + Python",
@@ -82,15 +76,9 @@ const t: Record<Language, Record<string, string>> = {
     animOff: "Off",
     windowBehavior: "Window Behavior",
     autoStart: "Auto Start",
-    minToTray: "Minimize to Tray",
     closeToTray: "Close to Tray",
-    autoAdmin: "Auto Admin Mode",
     rememberSize: "Remember Window Size",
     rememberPos: "Remember Window Position",
-    musicSettings: "Music Settings",
-    defaultVol: "Default Volume",
-    autoResume: "Auto Resume Playback",
-    autoScan: "Auto Scan Directory",
     interface: "Interface",
     sidebarWidth: "Sidebar Width",
     fontScale: "UI Scale",
@@ -101,7 +89,7 @@ const t: Record<Language, Record<string, string>> = {
     resetConfirm: "Restore default settings?",
     about: "About",
     aboutTitle: "Codes Suite",
-    aboutVersion: "Version 1.1.0",
+    aboutVersion: "Version 1.3.0",
     aboutDesc: "Unified Windows System Management Tool",
     aboutAuthor: "Author: Y0USA",
     aboutTech: "Electron + React + Python",
@@ -120,7 +108,7 @@ const themeDropdownOptions: { value: Theme; icon: React.ReactNode; key: string }
   { value: "midnight", icon: <Moon size={16} />, key: "midnight" },
   { value: "ocean", icon: <Palette size={16} />, key: "ocean" },
   { value: "emerald", icon: <Palette size={16} />, key: "emerald" },
-  { value: "crimson", icon: <Palette size={16} />, key: "crimson" },
+  { value: "crimson", icon: <Moon size={16} />, key: "crimson" },
 ];
 
 function ToggleRow({ icon, label, active, onChange }: {
@@ -163,17 +151,16 @@ export default function Settings() {
   const animationDuration = getAnimDuration(settings.animationSpeed);
 
   const [themePickerOpen, setThemePickerOpen] = useState(false);
-  const [localVolume, setLocalVolume] = useState(80);
 
   useEffect(() => {
     window.electronAPI?.python.call("config.get").then((cfg: any) => {
-      if (cfg?.musicVolume !== undefined) setLocalVolume(cfg.musicVolume);
-      if (cfg?.autoStart !== undefined) updateSettings({ autoStart: cfg.autoStart } as any);
-      if (cfg?.minimizeToTray !== undefined) updateSettings({ minimizeToTray: cfg.minimizeToTray } as any);
-      if (cfg?.closeToTray !== undefined) updateSettings({ closeToTray: cfg.closeToTray } as any);
-      if (cfg?.autoAdmin !== undefined) updateSettings({ autoAdmin: cfg.autoAdmin } as any);
-      if (cfg?.autoResume !== undefined) updateSettings({ autoResume: cfg.autoResume } as any);
-      if (cfg?.autoScan !== undefined) updateSettings({ autoScan: cfg.autoScan } as any);
+    }).catch(() => {});
+    // Load Electron-side settings
+    window.electronAPI?.settings.getAll().then((s: any) => {
+      if (s?.autoStart !== undefined) updateSettings({ autoStart: s.autoStart } as any);
+      if (s?.closeToTray !== undefined) updateSettings({ closeToTray: s.closeToTray } as any);
+      if (s?.rememberSize !== undefined) updateSettings({ rememberSize: s.rememberSize });
+      if (s?.rememberPosition !== undefined) updateSettings({ rememberPosition: s.rememberPosition });
     }).catch(() => {});
   }, []);
 
@@ -184,10 +171,6 @@ export default function Settings() {
     showToast(tx.resetConfirm, "success");
   };
 
-  const onVolumeChange = (v: number) => {
-    setLocalVolume(v);
-    window.electronAPI?.python.call("config.set", { musicVolume: v });
-  };
 
   const currentThemeOption = themeDropdownOptions.find(o => o.value === theme) ?? themeDropdownOptions[0];
 
@@ -214,7 +197,7 @@ export default function Settings() {
               </div>
               <div style={{ display: "flex", alignItems: "center", gap: space[2] }}>
                 <span style={{ fontSize: fontSizes.md, color: "var(--text-secondary)", fontWeight: 500 }}>
-                  {currentThemeOption.key.charAt(0).toUpperCase() + currentThemeOption.key.slice(1)}
+                  {tx[currentThemeOption.key]}
                 </span>
                 <GlassButton variant="ghost" size="sm" onClick={() => setThemePickerOpen(true)}>
                   <Palette size={14} />
@@ -286,38 +269,14 @@ export default function Settings() {
         </h2>
         <GlassCard>
           <div style={{ display: "flex", flexDirection: "column", gap: space[4] }}>
-            <ToggleRow icon={<Zap size={14} />} label={tx.autoStart} active={(settings as any).autoStart ?? false} onChange={(v) => updateSettings({ autoStart: v } as any)} />
-            <ToggleRow icon={<Layout size={14} />} label={tx.minToTray} active={(settings as any).minimizeToTray ?? false} onChange={(v) => updateSettings({ minimizeToTray: v } as any)} />
-            <ToggleRow icon={<Layout size={14} />} label={tx.closeToTray} active={(settings as any).closeToTray ?? false} onChange={(v) => updateSettings({ closeToTray: v } as any)} />
-            <ToggleRow icon={<Zap size={14} />} label={tx.autoAdmin} active={(settings as any).autoAdmin ?? false} onChange={(v) => updateSettings({ autoAdmin: v } as any)} />
-            <ToggleRow icon={<Layout size={14} />} label={tx.rememberSize} active={settings.rememberSize} onChange={(v) => updateSettings({ rememberSize: v })} />
-            <ToggleRow icon={<Layout size={14} />} label={tx.rememberPos} active={settings.rememberPosition} onChange={(v) => updateSettings({ rememberPosition: v })} />
+            <ToggleRow icon={<Zap size={14} />} label={tx.autoStart} active={(settings as any).autoStart ?? false} onChange={(v) => { updateSettings({ autoStart: v } as any); window.electronAPI?.settings.set('autoStart', v); }} />            <ToggleRow icon={<Layout size={14} />} label={tx.closeToTray} active={(settings as any).closeToTray ?? false} onChange={(v) => { updateSettings({ closeToTray: v } as any); window.electronAPI?.settings.set('closeToTray', v); }} />
+            
+            <ToggleRow icon={<Layout size={14} />} label={tx.rememberSize} active={settings.rememberSize} onChange={(v) => { updateSettings({ rememberSize: v }); window.electronAPI?.settings.set('rememberSize', v); }} />
+            <ToggleRow icon={<Layout size={14} />} label={tx.rememberPos} active={settings.rememberPosition} onChange={(v) => { updateSettings({ rememberPosition: v }); window.electronAPI?.settings.set('rememberPosition', v); }} />
           </div>
         </GlassCard>
       </div>
 
-      {/* ── Music Settings ── */}
-      <div style={{ marginBottom: space[6] }}>
-        <h2 className="section-title" style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: space[3], paddingLeft: space[1] }}>
-          <Sliders size={12} style={{ display: "inline", verticalAlign: "middle" }} />
-          {tx.musicSettings}
-        </h2>
-        <GlassCard>
-          <div style={{ display: "flex", flexDirection: "column", gap: space[4] }}>
-            <div>
-              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
-                <span style={{ fontSize: fontSizes.sm, color: "var(--text-secondary)" }}>{tx.defaultVol}</span>
-                <span style={{ fontSize: fontSizes.sm, color: "var(--text-tertiary)" }}>{localVolume}%</span>
-              </div>
-              <input type="range" min={0} max={100} value={localVolume}
-                onChange={(e) => onVolumeChange(Number(e.target.value))}
-                style={{ width: "100%" }} />
-            </div>
-            <ToggleRow icon={<Zap size={14} />} label={tx.autoResume} active={(settings as any).autoResume ?? false} onChange={(v) => updateSettings({ autoResume: v } as any)} />
-            <ToggleRow icon={<Zap size={14} />} label={tx.autoScan} active={(settings as any).autoScan ?? false} onChange={(v) => updateSettings({ autoScan: v } as any)} />
-          </div>
-        </GlassCard>
-      </div>
 
       {/* ── Interface ── */}
       <div style={{ marginBottom: space[6] }}>
@@ -353,7 +312,7 @@ export default function Settings() {
 
             {/* Compact toggle */}
             <ToggleRow icon={<Layout size={14} />} label={tx.compact} active={settings.compactMode}
-              onChange={(v) => updateSettings({ compactMode: v, fontScale: v ? 90 : 100 })} />
+              onChange={(v) => updateSettings({ compactMode: v, fontScale: v ? 90 : 120 })} />
           </div>
         </GlassCard>
       </div>
@@ -436,7 +395,7 @@ export default function Settings() {
               onClick={() => { setTheme(opt.value); setThemePickerOpen(false); }}
             >
               {opt.icon}
-              {opt.key.charAt(0).toUpperCase() + opt.key.slice(1)}
+              {tx[opt.key]}
             </GlassButton>
           ))}
         </div>
@@ -444,3 +403,4 @@ export default function Settings() {
     </motion.div>
   );
 }
+

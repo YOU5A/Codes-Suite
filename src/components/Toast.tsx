@@ -1,7 +1,7 @@
-import { motion, AnimatePresence } from "framer-motion";
+﻿import { motion, AnimatePresence } from "framer-motion";
 import { CheckCircle, XCircle, AlertTriangle, Info } from "lucide-react";
 import { useToast, type ToastType } from "@/contexts/ToastContext";
-import { glassEntrance } from "@/design-system";
+import { glassEntrance, materialToStyle } from "@/design-system";
 
 const iconMap: Record<ToastType, React.ReactNode> = {
   success: <CheckCircle size={16} />,
@@ -16,6 +16,8 @@ const colorMap: Record<ToastType, string> = {
   warning: "var(--warning)",
   info: "var(--accent)",
 };
+
+const mat = materialToStyle("elevated");
 
 export default function ToastContainer() {
   const { toasts } = useToast();
@@ -46,11 +48,11 @@ export default function ToastContainer() {
               gap: 10,
               padding: "10px 16px",
               borderRadius: 12,
-              background: "var(--bg-elevated)",
-              border: "1px solid var(--border-strong)",
-              boxShadow: "var(--shadow-lg)",
-              backdropFilter: "blur(20px)",
-              WebkitBackdropFilter: "blur(20px)",
+              background: mat.background,
+              border: mat.border,
+              boxShadow: mat.boxShadow,
+              backdropFilter: mat.backdropFilter,
+              WebkitBackdropFilter: mat.backdropFilter,
               minWidth: 240,
               maxWidth: 400,
               pointerEvents: "auto",

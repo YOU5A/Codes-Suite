@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, dialog, shell, Tray, Menu, nativeTheme } = require("electron");
+﻿const { app, BrowserWindow, ipcMain, dialog, shell, Tray, Menu, nativeTheme } = require("electron");
 const fs = require("fs");
 const path = require("path");
 const { execSync } = require("child_process");
@@ -52,8 +52,6 @@ function createWindow() {
   });
 
   if (process.platform === "win32") {
-    try { mainWindow.setBackgroundMaterial("acrylic"); } catch {}
-    try { mainWindow.setVibrancy("dark"); } catch {}
   }
 
   mainWindow.once("ready-to-show", () => { mainWindow.show(); });

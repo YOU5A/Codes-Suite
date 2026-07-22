@@ -1,4 +1,4 @@
-﻿import { useRef, useEffect, useCallback, type RefObject } from "react";
+import { useRef, useEffect, useCallback, type RefObject } from "react";
 
 export interface MouseGlowResult {
   containerRef: RefObject<HTMLDivElement | null>;
@@ -17,6 +17,8 @@ export interface MouseGlowResult {
  * Uses percentage-based positioning. Listens to scroll events on both
  * ancestors (parent scroll) and descendants (inner scrollable areas)
  * so the glow follows even when the mouse stays still.
+ *
+ * Perf: mouseMove uses requestAnimationFrame throttle (one DOM write per frame).
  */
 export function useMouseGlow(
   glowColor = "rgba(255,255,255,0.12)",
@@ -26,6 +28,7 @@ export function useMouseGlow(
   const overlayRef = useRef<HTMLDivElement | null>(null);
   const lastClientPos = useRef<{ x: number; y: number } | null>(null);
   const glowingRef = useRef(false);
+  const rafRef = useRef(0);
 
   useEffect(() => {
     const overlay = overlayRef.current;
@@ -100,7 +103,14 @@ export function useMouseGlow(
   const handleMouseMove = useCallback(
     (e: React.MouseEvent) => {
       lastClientPos.current = { x: e.clientX, y: e.clientY };
-      applyGlowAt(e.clientX, e.clientY);
+      // rAF throttle: one DOM write per frame
+      if (!rafRef.current) {
+        rafRef.current = requestAnimationFrame(() => {
+          rafRef.current = 0;
+          const pos = lastClientPos.current;
+          if (pos) applyGlowAt(pos.x, pos.y);
+        });
+      }
     },
     [applyGlowAt]
   );
@@ -117,6 +127,10 @@ export function useMouseGlow(
     const overlay = overlayRef.current;
     if (overlay) overlay.style.opacity = "0";
     glowingRef.current = false;
+    if (rafRef.current) {
+      cancelAnimationFrame(rafRef.current);
+      rafRef.current = 0;
+    }
   }, []);
 
   return {

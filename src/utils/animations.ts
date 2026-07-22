@@ -10,8 +10,8 @@ export const EASE_OUT = [0.16, 1, 0.3, 1] as const;
 export function getAnimDuration(speed: AnimationSpeed): number {
   switch (speed) {
     case "off":   return 0;
-    case "fast":  return 0.12;
-    default:      return 0.2;
+    case "fast":  return 0.15;
+    default:      return 0.35;
   }
 }
 
@@ -20,7 +20,7 @@ export function getMicroDuration(speed: AnimationSpeed): number {
   switch (speed) {
     case "off":   return 0;
     case "fast":  return 0.08;
-    default:      return 0.12;
+    default:      return 0.2;
   }
 }
 
@@ -30,8 +30,8 @@ export function getCssTransitionValues(speed: AnimationSpeed) {
     return { fast: "0ms", normal: "0ms", slow: "0ms" };
   }
   return {
-    fast:       speed === "fast" ? "80ms"   : "120ms",
-    normal:     speed === "fast" ? "150ms"  : "250ms",
-    slow:       speed === "fast" ? "300ms"  : "500ms",
+    fast:       speed === "fast" ? "100ms"  : "200ms",
+    normal:     speed === "fast" ? "200ms"  : "400ms",
+    slow:       speed === "fast" ? "350ms"  : "700ms",
   };
 }

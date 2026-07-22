@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Cpu, MemoryStick, HardDrive, Activity, Clock, Database, ArrowRight, Gauge, Music } from "lucide-react";
+import { Cpu, MemoryStick, HardDrive, Activity, Clock, Database, Gauge, Music } from "lucide-react";
 import GlassCard from "@/components/GlassCard";
 import {
   GlassButton,
@@ -302,12 +302,12 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: space[3] }}>
           {quickLinks.map((link) => (
             <GlassCard key={link.page} onClick={() => onNavigate(link.page)}>
-              <div style={{ display: "flex", alignItems: "center", gap: space[4] }}>
+              <div style={{ display: "flex", alignItems: "center", gap: space[3] }}>
                 <div
                   style={{
-                    width: 48,
-                    height: 48,
-                    borderRadius: radii.lg,
+                    width: 40,
+                    height: 40,
+                    borderRadius: radii.md,
                     background: "var(--accent-bg)",
                     display: "flex",
                     alignItems: "center",
@@ -324,7 +324,6 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
                   </div>
                   <div style={{ fontSize: fontSizes.sm, color: "var(--text-tertiary)" }}>{link.desc}</div>
                 </div>
-                <ArrowRight size={16} style={{ color: "var(--text-tertiary)", flexShrink: 0 }} />
               </div>
             </GlassCard>
           ))}

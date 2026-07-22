@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, createContext, useContext, type ReactNode } from "react";
 import { getCssTransitionValues, type AnimationSpeed } from "@/utils/animations";
 
 export type Theme = "light" | "dark" | "auto" | "graphite" | "midnight" | "ocean" | "emerald" | "crimson";
@@ -53,12 +53,25 @@ function resolveThemeToLightDark(theme: Theme): "light" | "dark" {
   return "dark";
 }
 
-export function useTheme() {
+/* ----- Theme Context ----- */
+
+interface ThemeContextValue {
+  theme: Theme;
+  resolvedTheme: "light" | "dark";
+  settings: AppSettings;
+  setTheme: (theme: Theme) => void;
+  updateSettings: (partial: Partial<AppSettings>) => void;
+  resetSettings: () => void;
+  toggleTheme: () => void;
+}
+
+const ThemeContext = createContext<ThemeContextValue | null>(null);
+
+export function ThemeProvider({ children }: { children: ReactNode }) {
   const [settings, setSettingsState] = useState<AppSettings>(loadSettings);
   const resolvedLightDark = resolveThemeToLightDark(settings.theme);
 
-
-  // Apply CSS variables (no background dep to avoid re-renders)
+  // Apply CSS variables
   useEffect(() => {
     const root = document.documentElement;
     root.setAttribute("data-theme", resolvedLightDark);
@@ -84,7 +97,6 @@ export function useTheme() {
     mq.addEventListener("change", handler);
     return () => mq.removeEventListener("change", handler);
   }, [settings.theme]);
-
 
   const setTheme = useCallback((theme: Theme) => {
     setSettingsState(prev => {
@@ -117,13 +129,25 @@ export function useTheme() {
     });
   }, []);
 
-  return {
-    theme: settings.theme,
-    resolvedTheme: resolvedLightDark,
-    settings,
-    setTheme,
-    updateSettings,
-    resetSettings,
-    toggleTheme,
-  };
+  return (
+    <ThemeContext.Provider value={{
+      theme: settings.theme,
+      resolvedTheme: resolvedLightDark,
+      settings,
+      setTheme,
+      updateSettings,
+      resetSettings,
+      toggleTheme,
+    }}>
+      {children}
+    </ThemeContext.Provider>
+  );
+}
+
+export function useTheme(): ThemeContextValue {
+  const ctx = useContext(ThemeContext);
+  if (!ctx) {
+    throw new Error("useTheme must be used within a ThemeProvider");
+  }
+  return ctx;
 }

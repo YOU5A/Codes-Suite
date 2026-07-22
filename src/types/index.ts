@@ -112,6 +112,11 @@ export interface ElectronAPI {
   app: {
     getPath: (name: string) => Promise<string>;
   };
+  settings: {
+    get: (key: string) => Promise<any>;
+    set: (key: string, value: any) => Promise<boolean>;
+    getAll: () => Promise<Record<string, any>>;
+  };
 }
 
 declare global {

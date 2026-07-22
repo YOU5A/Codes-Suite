@@ -1,4 +1,4 @@
-const { contextBridge, ipcRenderer } = require("electron");
+﻿const { contextBridge, ipcRenderer } = require("electron");
 
 const api = {
   window: {
@@ -13,6 +13,11 @@ const api = {
     getPosition: () => ipcRenderer.invoke("window:getPosition"),
     getSize: () => ipcRenderer.invoke("window:getSize"),
     setPosition: (x, y) => ipcRenderer.invoke("window:setPosition", x, y),
+  },
+  settings: {
+    get: (key) => ipcRenderer.invoke("settings:get", key),
+    set: (key, value) => ipcRenderer.invoke("settings:set", key, value),
+    getAll: () => ipcRenderer.invoke("settings:getAll"),
   },
   python: {
     call: (method, params) => ipcRenderer.invoke("python:call", method, params),

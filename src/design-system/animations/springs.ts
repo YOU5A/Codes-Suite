@@ -86,19 +86,11 @@ export const cardVariants: Variants = {
     opacity: 1,
     y: 0,
     scale: 1,
-    transition: {
-      type: "spring",
-      stiffness: 300,
-      damping: 30,
-      mass: 0.8,
-      staggerChildren: 0.05,
-    } satisfies Transition,
   },
   exit: {
     opacity: 0,
     y: -8,
     scale: 0.98,
-    transition: { duration: 0.15, ease: "easeIn" as const } satisfies Transition,
   },
 };
 
@@ -108,17 +100,10 @@ export const modalVariants: Variants = {
   visible: {
     opacity: 1,
     scale: 1,
-    transition: {
-      type: "spring",
-      stiffness: 300,
-      damping: 25,
-      mass: 0.8,
-    } satisfies Transition,
   },
   exit: {
     opacity: 0,
     scale: 0.95,
-    transition: { duration: 0.15, ease: "easeIn" as const } satisfies Transition,
   },
 };
 
@@ -128,10 +113,6 @@ export const listItemVariants: Variants = {
   visible: {
     opacity: 1,
     x: 0,
-    transition: {
-      duration: 0.25,
-      ease: [0.16, 1, 0.3, 1],
-    } satisfies Transition,
   },
 };
 

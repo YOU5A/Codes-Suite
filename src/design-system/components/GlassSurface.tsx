@@ -1,4 +1,4 @@
-﻿/**
+/**
  * GlassSurface - Base Glass Primitive
  *
  * Cursor-following white glow. Clean and subtle.
@@ -34,6 +34,7 @@ export const GlassSurface = forwardRef<HTMLDivElement, GlassSurfaceProps>(
     const glowRef = useRef<HTMLDivElement | null>(null);
     const containerRef = useRef<HTMLDivElement | null>(null);
     const lastPos = useRef<{ x: number; y: number } | null>(null);
+    const rafRef = useRef(0);
 
     useEffect(() => {
       if (noGlow) return;
@@ -93,7 +94,14 @@ export const GlassSurface = forwardRef<HTMLDivElement, GlassSurfaceProps>(
     const onMove = useCallback((e: React.MouseEvent) => {
       if (noGlow) return;
       lastPos.current = { x: e.clientX, y: e.clientY };
-      applyGlow(e.clientX, e.clientY);
+      // rAF throttle: one DOM write per frame
+      if (!rafRef.current) {
+        rafRef.current = requestAnimationFrame(() => {
+          rafRef.current = 0;
+          const pos = lastPos.current;
+          if (pos) applyGlow(pos.x, pos.y);
+        });
+      }
     }, [noGlow, applyGlow]);
 
     const onEnter = useCallback((e: React.MouseEvent) => {
@@ -106,6 +114,10 @@ export const GlassSurface = forwardRef<HTMLDivElement, GlassSurfaceProps>(
       if (noGlow) return;
       const g = glowRef.current;
       if (g) g.style.opacity = "0";
+      if (rafRef.current) {
+        cancelAnimationFrame(rafRef.current);
+        rafRef.current = 0;
+      }
     }, [noGlow]);
 
     return (

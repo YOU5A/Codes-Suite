@@ -1,6 +1,6 @@
 import { useState, useEffect, lazy, Suspense } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { useTheme } from "./hooks/useTheme";
+import { useTheme, ThemeProvider } from "./hooks/useTheme";
 import { getAnimDuration, EASE_OUT } from "./utils/animations";
 import { ToastProvider } from "./contexts/ToastContext";
 import { ConfirmProvider } from "./contexts/ConfirmContext";
@@ -42,6 +42,7 @@ function AppContent() {
     return (localStorage.getItem("codes-suite-page") as Page) || "dashboard";
   });
   const [isMaximized, setIsMaximized] = useState(false);
+  const animDuration = getAnimDuration(settings.animationSpeed);
 
   useEffect(() => {
     window.electronAPI?.window.onMaximizeChange(setIsMaximized);
@@ -96,7 +97,7 @@ function AppContent() {
         >
           <Suspense fallback={<PageLoader />}>
             {settings.animationSpeed === "off" ? (
-              <div style={{ height: "100%" }}>{pages[currentPage]}</div>
+              <div style={{ height: "100%", zoom: "var(--font-scale)" }}>{pages[currentPage]}</div>
             ) : (
               <AnimatePresence mode="wait">
                 <motion.div
@@ -105,6 +106,7 @@ function AppContent() {
                   initial="initial"
                   animate="animate"
                   exit="exit"
+                  transition={{ duration: animDuration, ease: EASE_OUT }}
                   style={{
                     height: "100%",
                     zoom: `var(--font-scale)`,
@@ -126,12 +128,14 @@ function AppContent() {
 
 export default function App() {
   return (
-    <ToastProvider>
-      <ConfirmProvider>
-        <LanguageProvider>
-          <AppContent />
-        </LanguageProvider>
-      </ConfirmProvider>
-    </ToastProvider>
+    <ThemeProvider>
+      <ToastProvider>
+        <ConfirmProvider>
+          <LanguageProvider>
+            <AppContent />
+          </LanguageProvider>
+        </ConfirmProvider>
+      </ToastProvider>
+    </ThemeProvider>
   );
 }

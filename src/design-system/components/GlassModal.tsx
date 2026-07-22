@@ -5,13 +5,14 @@
  * Glass glow is handled internally by GlassSurface.
  */
 
-import { type ReactNode, useEffect } from "react";
+import { type ReactNode, useEffect, useMemo } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import type { Transition, Variants } from "framer-motion";
 import { GlassSurface } from "./GlassSurface";
 import { glassPopIn } from "../animations";
 import { space, zLayers } from "../tokens";
+import { useTheme } from "@/hooks/useTheme";
 
 export interface GlassModalProps {
   children?: ReactNode;
@@ -25,14 +26,21 @@ export interface GlassModalProps {
 
 const backdropVariants: Variants = {
   hidden: { opacity: 0 },
-  visible: { opacity: 1, transition: { duration: 0.2, ease: "easeOut" as const } satisfies Transition },
-  exit: { opacity: 0, transition: { duration: 0.15, ease: "easeIn" as const } satisfies Transition },
+  visible: { opacity: 1 },
+  exit: { opacity: 0 },
 };
 
 export function GlassModal({
   children, open, onClose, maxWidth = 420,
   disableBackdropClose = false, disableEscapeClose = false, noAnimation = false,
 }: GlassModalProps) {
+  const { settings } = useTheme();
+  const modalTransition: Transition = useMemo(() => {
+    if (settings.animationSpeed === "off") return { duration: 0 };
+    if (settings.animationSpeed === "normal") return { type: "spring", stiffness: 200, damping: 24, mass: 0.8 };
+    return { type: "spring", stiffness: 320, damping: 26, mass: 0.8 };
+  }, [settings.animationSpeed]);
+
   useEffect(() => {
     if (!open || disableEscapeClose) return;
     const handler = (e: KeyboardEvent) => { if (e.key === "Escape") onClose?.(); };
@@ -56,6 +64,7 @@ export function GlassModal({
           initial={noAnimation ? undefined : "hidden"}
           animate={noAnimation ? undefined : "visible"}
           exit={noAnimation ? undefined : "exit"}
+          transition={noAnimation ? undefined : modalTransition}
           style={{
             position: "fixed", inset: 0, zIndex: zLayers.modal,
             display: "flex", alignItems: "center", justifyContent: "center",
@@ -71,6 +80,7 @@ export function GlassModal({
             initial={noAnimation ? undefined : "hidden"}
             animate={noAnimation ? undefined : "visible"}
             exit={noAnimation ? undefined : "exit"}
+            transition={noAnimation ? undefined : modalTransition}
             onClick={(e) => e.stopPropagation()}
             style={{ width: "100%", maxWidth, margin: space[6] }}
           >
