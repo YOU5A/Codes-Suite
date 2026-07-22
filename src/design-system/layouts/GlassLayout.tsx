@@ -1,4 +1,4 @@
-﻿/**
+/**
  * GlassLayout — Root Application Shell
  *
  * The outermost layout container that establishes:

@@ -1,8 +1,15 @@
-import { useState, useEffect, useCallback } from "react";
+﻿import { useState, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
 import { RotateCcw, Trash2, FolderOpen, Download } from "lucide-react";
-import GlassCard from "@/components/GlassCard";
-import { GlassButton } from "@/design-system";
+import {
+  GlassCard,
+  GlassButton,
+  GlassEmptyState,
+  GlassBadge,
+  space,
+  fontSizes,
+  radii,
+} from "@/design-system";
 import { useToast } from "@/contexts/ToastContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useConfirm } from "@/contexts/ConfirmContext";
@@ -120,55 +127,88 @@ export default function BackupCenter(_props: Props) {
 
 
   return (
-    <motion.div animate={{ opacity: 1 }} transition={{ duration: animationDuration, ease: EASE_OUT }} style={{ maxWidth: 800, margin: "0 auto", width: "100%" }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
-        <h1 style={{ fontSize: 22, fontWeight: 600, color: "var(--text-primary)" }}>{tx.title}</h1>
-        <GlassButton variant="secondary" onClick={openBackupDir} style={{ padding: "6px 14px", fontSize: 12 }}>
-          <FolderOpen size={12} /> {tx.openDir}
+    <motion.div
+      animate={{ opacity: 1 }}
+      transition={{ duration: animationDuration, ease: EASE_OUT }}
+      style={{ maxWidth: 800, margin: "0 auto", width: "100%" }}
+    >
+      {/* Title + Toolbar */}
+      <div style={{
+        display: "flex", justifyContent: "space-between", alignItems: "center",
+        marginBottom: space[6],
+      }}>
+        <div style={{ display: "flex", alignItems: "center", gap: space[2] }}>
+          <h1 style={{ fontSize: fontSizes["2xl"], fontWeight: 600, color: "var(--text-primary)", margin: 0 }}>
+            {tx.title}
+          </h1>
+          {backups.length > 0 && (
+            <GlassBadge variant="accent" size="sm">{backups.length}</GlassBadge>
+          )}
+        </div>
+        <GlassButton variant="secondary" size="md" onClick={openBackupDir}>
+          <FolderOpen size={14} /> {tx.openDir}
         </GlassButton>
       </div>
 
+      {/* Loading */}
       {loading ? (
-        <GlassCard><div style={{ textAlign: "center", color: "var(--text-tertiary)", padding: 40 }}>...</div></GlassCard>
-      ) : backups.length === 0 ? (
-        <GlassCard>
-          <div style={{ textAlign: "center", color: "var(--text-tertiary)", padding: 40 }}>
-            <FolderOpen size={32} style={{ marginBottom: 12, opacity: 0.3 }} />
-            <div style={{ fontSize: 13 }}>{tx.noBackups}</div>
-          </div>
+        <GlassCard style={{ display: "flex", alignItems: "center", justifyContent: "center", padding: space[8] }}>
+          <div style={{
+            width: 24, height: 24, borderRadius: "50%",
+            border: "3px solid var(--border-color)",
+            borderTopColor: "var(--accent)",
+            animation: "spin 0.6s linear infinite",
+          }} />
         </GlassCard>
+      ) : backups.length === 0 ? (
+        /* Empty State */
+        <GlassEmptyState
+          icon={<FolderOpen size={48} />}
+          title={tx.noBackups}
+        />
       ) : (
-        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+        /* Backup List */
+        <div style={{ display: "flex", flexDirection: "column", gap: space[3] }}>
           {backups.map((bp) => (
-            <GlassCard key={bp.filename} style={{
-              padding: "16px 20px", display: "flex", alignItems: "center", justifyContent: "space-between",
-            }}>
-              <div>
-                <div style={{ fontSize: 14, fontWeight: 500, color: "var(--text-primary)", marginBottom: 4 }}>
+            <GlassCard
+              key={bp.filename}
+              style={{
+                padding: space[4] + "px " + space[5] + "px",
+                display: "flex", alignItems: "center", justifyContent: "space-between",
+              }}
+            >
+              <div style={{ minWidth: 0, flex: 1 }}>
+                <div style={{
+                  fontSize: fontSizes.md, fontWeight: 500,
+                  color: "var(--text-primary)", marginBottom: 4,
+                }}>
                   {bp.date} {bp.time}
                 </div>
-                <div style={{ fontSize: 12, color: "var(--text-secondary)", fontVariantNumeric: "tabular-nums", letterSpacing: "0.02em" }}>
-                  {tx.decimal}: {bp.decimal} | {tx.hex}: {bp.hex}
+                <div style={{
+                  fontSize: fontSizes.sm, color: "var(--text-secondary)",
+                  fontVariantNumeric: "tabular-nums", letterSpacing: "0.02em",
+                }}>
+                  {tx.decimal}: {bp.decimal}  |  {tx.hex}: {bp.hex}
                 </div>
-                <div style={{ display: "flex", gap: 12, marginTop: 2 }}>
-                  <span style={{ fontSize: 11, color: "var(--text-tertiary)" }}>
+                <div style={{ display: "flex", gap: space[3], marginTop: space[1] }}>
+                  <GlassBadge variant="default" size="sm">
                     {tx.source}: {(bp as any).module === "win32" ? "Win32 Priority" : (bp as any).module ?? "N/A"}
-                  </span>
+                  </GlassBadge>
                   {(bp as any).size !== undefined && (
-                    <span style={{ fontSize: 11, color: "var(--text-tertiary)" }}>
+                    <GlassBadge variant="default" size="sm">
                       {formatBytes((bp as any).size)}
-                    </span>
+                    </GlassBadge>
                   )}
                 </div>
               </div>
-              <div style={{ display: "flex", gap: 8 }}>
-                <GlassButton variant="secondary" onClick={() => exportBackup(bp)} style={{ padding: "6px 14px", fontSize: 12 }}>
+              <div style={{ display: "flex", gap: space[2], flexShrink: 0, marginLeft: space[4] }}>
+                <GlassButton variant="secondary" size="sm" onClick={() => exportBackup(bp)}>
                   <Download size={12} /> {tx.export}
                 </GlassButton>
-                <GlassButton variant="secondary" onClick={() => restoreBackup(bp)} style={{ padding: "6px 14px", fontSize: 12 }}>
+                <GlassButton variant="secondary" size="sm" onClick={() => restoreBackup(bp)}>
                   <RotateCcw size={12} /> {tx.restore}
                 </GlassButton>
-                <GlassButton variant="secondary" onClick={() => deleteBackup(bp)} style={{ padding: "6px 14px", fontSize: 12 }}>
+                <GlassButton variant="secondary" size="sm" onClick={() => deleteBackup(bp)}>
                   <Trash2 size={12} /> {tx.delete}
                 </GlassButton>
               </div>

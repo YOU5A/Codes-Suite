@@ -4,8 +4,17 @@ import {
   FolderOpen, Search, Save, Image, X, Play, Pause, Square,
   Volume2, Trash2, Music, Edit3
 } from "lucide-react";
-import GlassCard from "@/components/GlassCard";
-import { GlassButton, GlassInput } from "@/design-system";
+import {
+  GlassCard,
+  GlassButton,
+  GlassInput,
+  GlassSurface,
+  GlassEmptyState,
+  GlassBadge,
+  space,
+  fontSizes,
+  radii,
+} from "@/design-system";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useToast } from "@/contexts/ToastContext";
 import type { MusicMetadata, PlaybackState } from "@/types";
@@ -326,36 +335,48 @@ export default function MusicManager() {
     doScan();
   };
 
+  // ── Toolbar actions ──
+  const clearTagFields = () => {
+    setTagTitle(""); setTagArtist(""); setTagAlbum(""); setTagYear("");
+  };
+
   return (
-    <motion.div animate={{ opacity: 1 }} transition={{ duration: animationDuration, ease: EASE_OUT }}
-      style={{ height: "100%", display: "flex", flexDirection: "column", gap: 12 }}>
-      {/* ── Title + Toolbar ── */}
-      <div style={{ display: "flex", alignItems: "center", gap: 12, flexShrink: 0 }}>
-        <h1 style={{ fontSize: 22, fontWeight: 600, color: "var(--text-primary)", margin: 0 }}>
+    <motion.div
+      animate={{ opacity: 1 }}
+      transition={{ duration: animationDuration, ease: EASE_OUT }}
+      style={{ height: "100%", display: "flex", flexDirection: "column", gap: space[3] }}
+    >
+      {/* Title + Toolbar */}
+      <div style={{ display: "flex", alignItems: "center", gap: space[3], flexShrink: 0 }}>
+        <h1 style={{ fontSize: fontSizes["2xl"], fontWeight: 600, color: "var(--text-primary)", margin: 0 }}>
           {tx.title}
         </h1>
+        {files.length > 0 && (
+          <GlassBadge variant="accent" size="sm">{files.length} {lang === "zh" ? "\u6587\u4ef6" : "files"}</GlassBadge>
+        )}
         <div style={{ flex: 1 }} />
-        <GlassButton variant="primary" onClick={browse} style={{ padding: "7px 16px", fontSize: 12 }}>
-          <FolderOpen size={13} /> {tx.browse}
+        <GlassButton variant="primary" onClick={browse} size="md">
+          <FolderOpen size={14} /> {tx.browse}
         </GlassButton>
-        <GlassButton variant="secondary" onClick={() => doScan()} style={{ padding: "7px 16px", fontSize: 12 }}>
-          <Search size={13} /> {tx.scan}
+        <GlassButton variant="secondary" onClick={() => doScan()} size="md">
+          <Search size={14} /> {tx.scan}
         </GlassButton>
       </div>
 
-      {/* ── Empty State ── */}
+      {/* Empty State */}
       {files.length === 0 ? (
-        <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 16 }}>
-          <Music size={48} style={{ color: "var(--text-tertiary)", opacity: 0.3 }} />
-          <span style={{ color: "var(--text-tertiary)", fontSize: 14 }}>{tx.noFiles}</span>
-          <span style={{ color: "var(--text-tertiary)", fontSize: 11, opacity: 0.6 }}>{tx.formats}</span>
-        </div>
+        <GlassEmptyState
+          icon={<Music size={48} />}
+          title={tx.noFiles}
+          description={tx.formats}
+          style={{ flex: 1 }}
+        />
       ) : (
         <>
-          {/* ── Main Content ── */}
-          <div style={{ flex: 1, minHeight: 0, display: "flex", gap: 16 }}>
+          {/* Main Content */}
+          <div style={{ flex: 1, minHeight: 0, display: "flex", gap: space[4] }}>
             {/* Left: Cover */}
-            <div style={{ width: 220, flexShrink: 0, display: "flex", flexDirection: "column", gap: 12 }}>
+            <div style={{ width: 220, flexShrink: 0, display: "flex", flexDirection: "column", gap: space[3] }}>
               <GlassCard style={{ padding: 0, overflow: "hidden" }}>
                 <div style={{
                   width: "100%", aspectRatio: "1",
@@ -370,99 +391,119 @@ export default function MusicManager() {
                   )}
                 </div>
               </GlassCard>
-              <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                <GlassButton variant="secondary" onClick={pickCover} style={{ padding: "6px 12px", fontSize: 11, justifyContent: "center", width: "100%" }}>
-                  <Image size={11} /> {tx.selectCover}
+
+              <div style={{ display: "flex", flexDirection: "column", gap: space[1] }}>
+                <GlassButton variant="secondary" size="sm" inline={false} onClick={pickCover}
+                  style={{ justifyContent: "center" }}>
+                  <Image size={12} /> {tx.selectCover}
                 </GlassButton>
-                <GlassButton variant="secondary" onClick={applyCover} style={{ padding: "6px 12px", fontSize: 11, justifyContent: "center", width: "100%" }}>
+                <GlassButton variant="secondary" size="sm" inline={false} onClick={applyCover}
+                  style={{ justifyContent: "center" }}>
                   {tx.applyCover}
                 </GlassButton>
-                <GlassButton variant="secondary" onClick={removeCover} style={{ padding: "6px 12px", fontSize: 11, justifyContent: "center", width: "100%" }}>
-                  <Trash2 size={11} /> {tx.removeCover}
+                <GlassButton variant="secondary" size="sm" inline={false} onClick={removeCover}
+                  style={{ justifyContent: "center" }}>
+                  <Trash2 size={12} /> {tx.removeCover}
                 </GlassButton>
               </div>
-              {/* Cover Preview */}
+
               {coverPreviewB64 && (
                 <GlassCard style={{ padding: 0, overflow: "hidden" }}>
                   <img src={`data:image/jpeg;base64,${coverPreviewB64}`} alt="Cover Preview"
-                    style={{ width: "100%", aspectRatio: "1", objectFit: "cover", borderRadius: 12 }} />
+                    style={{ width: "100%", aspectRatio: "1", objectFit: "cover", borderRadius: radii.lg }} />
                 </GlassCard>
               )}
             </div>
 
             {/* Right: Tag Editor + File List */}
-            <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 12 }}>
+            <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: space[3] }}>
               {/* Tag Editor */}
               <GlassCard style={{ flexShrink: 0 }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: space[2], marginBottom: space[3] }}>
                   <Edit3 size={14} style={{ color: "var(--text-secondary)" }} />
-                  <span style={{ fontSize: 13, fontWeight: 500, color: "var(--text-secondary)" }}>{tx.tagEditor}</span>
+                  <span style={{ fontSize: fontSizes.md, fontWeight: 500, color: "var(--text-secondary)" }}>
+                    {tx.tagEditor}
+                  </span>
+                  {selectedFile && (
+                    <span style={{
+                      fontSize: fontSizes.xs, color: "var(--text-tertiary)",
+                      marginLeft: "auto", maxWidth: "45%",
+                      overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+                    }}>
+                      {selectedFile.split("\\").pop()}
+                    </span>
+                  )}
                 </div>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8 }}>
-                  <div>
-                    <label style={{ fontSize: 10, color: "var(--text-tertiary)", display: "block", marginBottom: 2 }}>{tx.title_}</label>
-                    <GlassInput value={tagTitle} onChange={e => setTagTitle(e.target.value)} style={{ fontSize: 12, padding: "5px 8px" }} />
-                  </div>
-                  <div>
-                    <label style={{ fontSize: 10, color: "var(--text-tertiary)", display: "block", marginBottom: 2 }}>{tx.artist}</label>
-                    <GlassInput value={tagArtist} onChange={e => setTagArtist(e.target.value)} style={{ fontSize: 12, padding: "5px 8px" }} />
-                  </div>
-                  <div>
-                    <label style={{ fontSize: 10, color: "var(--text-tertiary)", display: "block", marginBottom: 2 }}>{tx.album}</label>
-                    <GlassInput value={tagAlbum} onChange={e => setTagAlbum(e.target.value)} style={{ fontSize: 12, padding: "5px 8px" }} />
-                  </div>
-                  <div>
-                    <label style={{ fontSize: 10, color: "var(--text-tertiary)", display: "block", marginBottom: 2 }}>{tx.year}</label>
-                    <GlassInput value={tagYear} onChange={e => setTagYear(e.target.value)} style={{ fontSize: 12, padding: "5px 8px" }} />
-                  </div>
-                  <div style={{ display: "flex", alignItems: "flex-end", gap: 6, justifyContent: "flex-end", gridColumn: "span 2" }}>
-                    <GlassButton variant="primary" onClick={saveTags} disabled={saving} style={{ padding: "7px 14px", fontSize: 12, whiteSpace: "nowrap" }}>
-                      <Save size={13} /> {tx.saveTags}
-                    </GlassButton>
-                    <GlassButton variant="danger" onClick={() => { setTagTitle(""); setTagArtist(""); setTagAlbum(""); setTagYear(""); }}
-                      style={{ padding: "7px 14px", fontSize: 12, whiteSpace: "nowrap" }}>
-                      <X size={13} /> {tx.clearTags}
-                    </GlassButton>
-                    <GlassButton variant="secondary" onClick={applyAll} disabled={saving} style={{ padding: "7px 14px", fontSize: 12, whiteSpace: "nowrap" }}>
-                      {tx.applyAll}
-                    </GlassButton>
-                  </div>
+
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: space[2] }}>
+                  <GlassInput value={tagTitle} onChange={e => setTagTitle(e.target.value)} placeholder={tx.title_}
+                    style={{ fontSize: fontSizes.sm, padding: space[1] + "px " + space[2] + "px" }} />
+                  <GlassInput value={tagArtist} onChange={e => setTagArtist(e.target.value)} placeholder={tx.artist}
+                    style={{ fontSize: fontSizes.sm, padding: space[1] + "px " + space[2] + "px" }} />
+                  <GlassInput value={tagAlbum} onChange={e => setTagAlbum(e.target.value)} placeholder={tx.album}
+                    style={{ fontSize: fontSizes.sm, padding: space[1] + "px " + space[2] + "px" }} />
+                  <GlassInput value={tagYear} onChange={e => setTagYear(e.target.value)} placeholder={tx.year}
+                    style={{ fontSize: fontSizes.sm, padding: space[1] + "px " + space[2] + "px" }} />
                 </div>
-                <div style={{ marginTop: 8, display: "flex", gap: 6, alignItems: "center" }}>
+
+                <div style={{ display: "flex", gap: space[2], marginTop: space[3] }}>
+                  <GlassButton variant="primary" onClick={saveTags} disabled={saving} size="md">
+                    <Save size={12} /> {tx.saveTags}
+                  </GlassButton>
+                  <GlassButton variant="secondary" onClick={clearTagFields} size="md">
+                    <X size={12} /> {tx.clearTags}
+                  </GlassButton>
+                  <GlassButton variant="secondary" onClick={applyAll} disabled={saving} size="md">
+                    {tx.applyAll}
+                  </GlassButton>
+                </div>
+
+                {/* Rename Row */}
+                <div style={{ display: "flex", gap: space[2], marginTop: space[3] }}>
                   <GlassInput
                     value={renameName}
                     onChange={e => setRenameName(e.target.value)}
-                    placeholder={lang === "zh" ? "????..." : "Rename..."}
-                    style={{ flex: 1, fontSize: 12, padding: "5px 8px" }} />
-                  <GlassButton variant="secondary" onClick={renameOne} style={{ padding: "4px 6px", fontSize: 10, whiteSpace: "nowrap" }}>
-                    <Edit3 size={11} /> {tx.renameSelected}
+                    style={{ flex: 1, fontSize: fontSizes.sm, padding: space[1] + "px " + space[2] + "px" }}
+                  />
+                  <GlassButton variant="secondary" onClick={renameOne} size="sm">
+                    {tx.renameSelected}
                   </GlassButton>
-                  <GlassButton variant="secondary" onClick={renameAll} style={{ padding: "5px 10px", fontSize: 11, whiteSpace: "nowrap" }}>
+                  <GlassButton variant="secondary" onClick={renameAll} size="sm">
                     {tx.renameAll}
                   </GlassButton>
                 </div>
               </GlassCard>
 
               {/* File List */}
-              <GlassCard style={{ flex: 1, minHeight: 0, padding: 0, overflow: "hidden", display: "flex", flexDirection: "column" }}>
-                <div style={{ flex: 1, overflowY: "auto" }}>
-                  {files.map(fp => {
+              <GlassCard style={{ flex: 1, minHeight: 0, padding: 0, overflow: "hidden" }}>
+                <div style={{
+                  height: "100%", overflowY: "auto",
+                  padding: space[2] + "px 0",
+                }}>
+                  {files.map((fp: string) => {
                     const name = fp.split("\\").pop() || fp;
                     const active = fp === selectedFile;
                     return (
-                      <div key={fp}
-                        onClick={() => selectFile(fp)}
-                        onDoubleClick={() => playFile(fp)}
+                      <div
+                        key={fp}
+                        onClick={() => { selectFile(fp); }}
                         style={{
-                          padding: "7px 14px", cursor: "pointer", fontSize: 12,
-                          color: active ? "var(--accent)" : "var(--text-primary)",
+                          padding: space[2] + "px " + space[4] + "px",
+                          cursor: "pointer",
+                          fontSize: fontSizes.sm,
+                          color: active ? "var(--accent)" : "var(--text-secondary)",
                           background: active ? "var(--accent-bg)" : "transparent",
-                          borderBottom: "1px solid var(--border-color)",
-                          display: "flex", alignItems: "center", gap: 8,
+                          borderLeft: active ? "3px solid var(--accent)" : "3px solid transparent",
+                          display: "flex", alignItems: "center", gap: space[2],
                           transition: "background var(--transition-fast)",
-                        }}>
+                        }}
+                      >
                         <Music size={12} />
-                        <span style={{ flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{name}</span>
+                        <span style={{
+                          flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+                        }}>
+                          {name}
+                        </span>
                       </div>
                     );
                   })}
@@ -472,42 +513,48 @@ export default function MusicManager() {
           </div>
         </>
       )}
-      {/* ── Player Bar ── */}
-      <div style={{
-        flexShrink: 0,
-        padding: "16px 24px",
-        borderRadius: 20,
-        background: "rgba(255,255,255,0.10)",
-        backdropFilter: "blur(40px) saturate(180%)",
-        WebkitBackdropFilter: "blur(40px) saturate(180%)",
-        border: "1px solid rgba(255,255,255,0.12)",
-        boxShadow: "0 8px 32px rgba(0,0,0,0.10), inset 0 1px 0 rgba(255,255,255,0.08)",
-      }}>
+
+      {/* Player Bar */}
+      <GlassSurface
+        tier="regular"
+        style={{
+          flexShrink: 0,
+          padding: space[4] + "px " + space[6] + "px",
+          display: "flex",
+          flexDirection: "column",
+          gap: space[3],
+        }}
+      >
         {/* Info Row */}
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
+        <div style={{
+          display: "flex", justifyContent: "space-between", alignItems: "center",
+        }}>
           <span style={{
-            fontSize: 12, fontWeight: 500, color: "var(--text-primary)",
+            fontSize: fontSizes.sm, fontWeight: 500, color: "var(--text-primary)",
             maxWidth: "65%", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
           }}>
             {playback.is_playing || playback.is_paused
               ? (selectedFile ? selectedFile.split("\\").pop() : tx.nowPlaying)
               : tx.noMusic}
           </span>
-          <span style={{ fontSize: 11, color: "var(--text-tertiary)", fontVariantNumeric: "tabular-nums" }}>
+          <span style={{
+            fontSize: fontSizes.xs, color: "var(--text-tertiary)",
+            fontVariantNumeric: "tabular-nums",
+          }}>
             {fmtTime(playback.position_ms)} / {fmtTime(playback.length_ms)}
           </span>
         </div>
 
-        {/* Progress Bar — pure div + CSS transition, no Framer Motion */}
+        {/* Progress Bar */}
         <div
-          ref={progressRef} onMouseDown={handleProgressMouseDown}
+          ref={progressRef}
+          onMouseDown={handleProgressMouseDown}
           style={{
-            width: "100%", height: 6, borderRadius: 3, marginBottom: 14,
+            width: "100%", height: 6, borderRadius: 3,
             background: "rgba(128,128,128,0.25)",
             cursor: "pointer", position: "relative",
           }}
         >
-          {/* Filled */}
           <div style={{
             position: "absolute", top: 0, left: 0, height: "100%", borderRadius: 3,
             width: `${pct}%`,
@@ -515,7 +562,6 @@ export default function MusicManager() {
             transition: "width 0.2s linear",
             boxShadow: "0 0 8px rgba(var(--accent-rgb, 99,102,241), 0.4)",
           }} />
-          {/* Thumb dot */}
           <div style={{
             position: "absolute", top: "50%", left: `${pct}%`,
             width: 12, height: 12, borderRadius: "50%",
@@ -529,41 +575,51 @@ export default function MusicManager() {
 
         {/* Controls Row */}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 20 }}>
-          {/* Stop */}
-          <button onClick={stop} style={{
-            background: "none", border: "none", cursor: "pointer",
-            color: "var(--text-secondary)", padding: 4,
-            opacity: 0.6, transition: "opacity var(--transition-fast)",
-          }}
-            onMouseEnter={e => e.currentTarget.style.opacity = "1"}
-            onMouseLeave={e => e.currentTarget.style.opacity = "0.6"}
-          >
+          <GlassButton variant="ghost" size="sm" onClick={stop} noAnimation
+            style={{ padding: 4 }}>
             <Square size={16} fill="currentColor" />
-          </button>
+          </GlassButton>
 
-          {/* Play/Pause */}
-          <motion.button whileTap={{ scale: 0.93 }} whileHover={{ scale: 1.06 }} transition={{ type: "tween", duration: 0.15, ease: EASE_OUT }}
+          <motion.button
+            whileTap={{ scale: 0.93 }}
+            whileHover={{ scale: 1.06 }}
+            transition={{ type: "tween", duration: 0.15, ease: EASE_OUT }}
             onClick={toggle}
             style={{
               background: "var(--accent)", border: "none", borderRadius: "50%",
               width: 44, height: 44, display: "flex", alignItems: "center", justifyContent: "center",
               cursor: "pointer", color: "#fff",
               boxShadow: "0 4px 16px rgba(var(--accent-rgb, 99,102,241), 0.35)",
-            }}>
-            {playback.is_playing ? <Pause size={18} fill="#fff" /> : <Play size={18} fill="#fff" style={{ marginLeft: 2 }} />}
+            }}
+          >
+            {playback.is_playing
+              ? <Pause size={18} fill="#fff" />
+              : <Play size={18} fill="#fff" style={{ marginLeft: 2 }} />
+            }
           </motion.button>
 
           {/* Volume */}
-          <div style={{ display: "flex", alignItems: "center", gap: 8, marginLeft: 8 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: space[2], marginLeft: 8 }}>
             <Volume2 size={14} style={{ color: "var(--text-tertiary)" }} />
-            <input type="range" min={0} max={100} value={volume} onChange={changeVol}
-              style={{ width: 80, height: 8, userSelect: "auto", accentColor: "var(--accent)", cursor: "pointer" }} />
-            <span style={{ fontSize: 10, color: "var(--text-tertiary)", minWidth: 28, textAlign: "right", fontVariantNumeric: "tabular-nums" }}>
+            <input
+              type="range"
+              min={0} max={100} value={volume}
+              onChange={changeVol}
+              style={{
+                width: 80, height: 8,
+                userSelect: "auto", accentColor: "var(--accent)", cursor: "pointer",
+              }}
+            />
+            <span style={{
+              fontSize: 10, color: "var(--text-tertiary)",
+              minWidth: 28, textAlign: "right",
+              fontVariantNumeric: "tabular-nums",
+            }}>
               {volume}%
             </span>
           </div>
         </div>
-      </div>
+      </GlassSurface>
     </motion.div>
   );
 }

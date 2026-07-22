@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Codes-Suite Liquid Glass Design System
  *
  * @module design-system
@@ -71,6 +71,9 @@ export {
   GlassModal,
   GlassSelect,
   GlassToggle,
+  GlassProgressBar,
+  GlassBadge,
+  GlassEmptyState,
 } from './components';
 export type {
   GlassSurfaceProps,
@@ -84,6 +87,11 @@ export type {
   GlassSelectProps,
   SelectOption,
   GlassToggleProps,
+  GlassProgressBarProps,
+  ProgressColor,
+  GlassBadgeProps,
+  BadgeVariant,
+  GlassEmptyStateProps,
 } from './components';
 
 /* ─── Layouts ─── */

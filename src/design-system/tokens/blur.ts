@@ -23,28 +23,28 @@ export interface BlurConfig {
 
 export const blurHierarchy: Record<GlassTier, BlurConfig> = {
   ultraThin: {
-    blur: 8,
+    blur: 12,
     saturation: 1.8,
     opacity: 0.35,
-    cssValue: "blur(8px) saturate(1.8)",
+    cssValue: "blur(12px) saturate(1.8)",
   },
   regular: {
-    blur: 20,
+    blur: 30,
     saturation: 1.8,
     opacity: 0.55,
-    cssValue: "blur(20px) saturate(1.8)",
+    cssValue: "blur(30px) saturate(1.8)",
   },
   thick: {
-    blur: 40,
+    blur: 55,
     saturation: 2.0,
     opacity: 0.72,
-    cssValue: "blur(40px) saturate(2.0)",
+    cssValue: "blur(55px) saturate(2.0)",
   },
   elevated: {
-    blur: 30,
+    blur: 45,
     saturation: 2.0,
     opacity: 0.88,
-    cssValue: "blur(30px) saturate(2.0)",
+    cssValue: "blur(45px) saturate(2.0)",
   },
 } as const;
 
