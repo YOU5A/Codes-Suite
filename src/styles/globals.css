@@ -1,4 +1,4 @@
-@import "tailwindcss";
+﻿@import "tailwindcss";
 
 :root {
   --radius: 20px;
@@ -291,8 +291,43 @@ input[type="range"]::-webkit-slider-thumb:hover{transform:scale(1.15)}
 
 .glass-main {
   --content-padding: 24px;
+  --scroll-fade-size: 48px;
   scroll-behavior: smooth;
   scrollbar-gutter: stable;
+}
+
+.scroll-fade-edge {
+  mask-image: linear-gradient(
+    to bottom,
+    transparent,
+    black var(--scroll-fade-size, 48px),
+    black calc(100% - var(--scroll-fade-size, 48px)),
+    transparent
+  );
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    transparent,
+    black var(--scroll-fade-size, 48px),
+    black calc(100% - var(--scroll-fade-size, 48px)),
+    transparent
+  );
+}
+
+.glass-main--scroll-fade {
+  mask-image: linear-gradient(
+    to bottom,
+    transparent,
+    black var(--scroll-fade-size, 48px),
+    black calc(100% - var(--scroll-fade-size, 48px)),
+    transparent
+  );
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    transparent,
+    black var(--scroll-fade-size, 48px),
+    black calc(100% - var(--scroll-fade-size, 48px)),
+    transparent
+  );
 }
 
 @media (max-width: 720px) {

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+﻿import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import {
   FolderOpen, Search, Save, Image, X, Play, Pause, Square, Settings,
@@ -530,7 +530,7 @@ export default function MusicManager({ onNavigate, fluidSettings: externalSettin
               {/* File List */}
               <GlassCard style={{ flex: 1, minHeight: 0, padding: 0, overflow: "hidden", display: "flex", flexDirection: "column" }}>
                 <div
-                  className="music-file-list-scroll"
+                  className="music-file-list-scroll scroll-fade-edge"
                   style={{
                     flex: 1, overflowY: "auto", overflowX: "hidden",
                     padding: space[2] + "px 0",

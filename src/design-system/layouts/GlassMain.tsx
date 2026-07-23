@@ -5,6 +5,7 @@
  * - Consistent padding and spacing
  * - Scrollable content container
  * - Optional background tint
+ * - Optional scroll edge fade mask
  * - Responsive behavior via CSS grid
  *
  * Works with GlassSurface to maintain the blur hierarchy.
@@ -12,7 +13,6 @@
 
 import { forwardRef, type ReactNode } from "react";
 import type { GlassTier } from "../tokens";
-import { space } from "../tokens";
 
 export interface GlassMainProps {
   children?: ReactNode;
@@ -22,6 +22,8 @@ export interface GlassMainProps {
   padding?: number;
   /** Max content width. Default: none (full). */
   maxWidth?: number;
+  /** Enable scroll edge fade gradient mask on top/bottom edges. Default: true. */
+  scrollFade?: boolean;
 }
 
 export const GlassMain = forwardRef<HTMLElement, GlassMainProps>(
@@ -31,13 +33,17 @@ export const GlassMain = forwardRef<HTMLElement, GlassMainProps>(
       tier,
       padding,
       maxWidth,
+      scrollFade = true,
     },
     ref
   ) {
+    const className = scrollFade
+      ? "glass-main glass-main--scroll-fade"
+      : "glass-main";
     return (
       <main
         ref={ref}
-        className="glass-main"
+        className={className}
         style={{
           flex: 1,
           overflow: "auto",

@@ -168,7 +168,7 @@ export default function BackupCenter(_props: Props) {
         />
       ) : (
         /* Backup List */
-        <div style={{ display: "flex", flexDirection: "column", gap: space[3], flex: 1, overflowY: "auto", minHeight: 0 }}>
+        <div className="scroll-fade-edge" style={{ display: "flex", flexDirection: "column", gap: space[3], flex: 1, overflowY: "auto", minHeight: 0 }}>
           {backups.map((bp) => (
             <GlassCard
               key={bp.filename}
