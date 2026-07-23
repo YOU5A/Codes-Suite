@@ -227,6 +227,27 @@ export default function Win32Priority(_props: Props) {
     fetchData();
   };
 
+  // 光标跟随白色光晕（匹配 GlassButton）
+  const setPillGlow = useCallback((el: HTMLElement, cx: number, cy: number) => {
+    const r = el.getBoundingClientRect();
+    if (r.width === 0 || r.height === 0) return;
+    el.style.setProperty("--pill-gx", ((cx - r.left) / r.width) * 100 + "%");
+    el.style.setProperty("--pill-gy", ((cy - r.top) / r.height) * 100 + "%");
+    el.style.setProperty("--pill-go", "1");
+  }, []);
+
+  const clearPillGlow = useCallback((el: HTMLElement) => {
+    el.style.setProperty("--pill-go", "0");
+  }, []);
+
+  const handlePillMove = useCallback((e: React.MouseEvent<HTMLButtonElement>) => {
+    setPillGlow(e.currentTarget, e.clientX, e.clientY);
+  }, [setPillGlow]);
+
+  const handlePillLeave = useCallback((e: React.MouseEvent<HTMLButtonElement>) => {
+    clearPillGlow(e.currentTarget);
+  }, [clearPillGlow]);
+
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -273,37 +294,53 @@ export default function Win32Priority(_props: Props) {
           {presetData.map((p) => {
             const isActive = registry?.hex?.toUpperCase() === p.hex;
             return (
-              <motion.div
+              <motion.button
                 key={p.hex}
+                className="theme-pill"
                 onClick={() => setCustomValue(p.hex)}
+                onMouseMove={handlePillMove}
+                onMouseEnter={handlePillMove}
+                onMouseLeave={handlePillLeave}
                 whileHover={
                   isActive
                     ? undefined
                     : {
-                        scale: 1.03,
+                        scale: 1.02,
+                        borderColor: "var(--border-strong)",
                         background: "var(--bg-elevated)",
-                        boxShadow: "0 0 24px rgba(var(--accent-rgb), 0.18), 0 4px 16px rgba(0,0,0,0.08)",
                       }
                 }
-                whileTap={isActive ? undefined : { scale: 0.97 }}
+                whileTap={isActive ? undefined : { scale: 0.98 }}
                 animate={
                   isActive
                     ? {
+                        borderColor: "var(--accent)",
                         background: "var(--accent-bg)",
                         boxShadow: "0 0 20px rgba(var(--accent-rgb), 0.14)",
                       }
                     : {
+                        borderColor: "var(--border-color)",
                         background: "var(--bg-secondary)",
                         boxShadow: "none",
                       }
                 }
                 transition={{ type: "tween", duration: 0.2, ease: "easeOut" }}
                 style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 4,
+                  width: "100%",
                   padding: `${space[3]}px ${space[4]}px`,
                   borderRadius: radii.lg,
                   cursor: isActive ? "default" : "pointer",
-                  border: "none",
+                  border: "1.5px solid var(--border-color)",
+                  background: "var(--bg-secondary)",
+                  textAlign: "left",
+                  fontFamily: "inherit",
+                  fontSize: "inherit",
+                  color: "inherit",
                   userSelect: "none",
+                  outline: "none",
                 }}
               >
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 4 }}>
@@ -327,7 +364,8 @@ export default function Win32Priority(_props: Props) {
                     {ccLabel[lang][p.cc]}
                   </span>
                 </div>
-              </motion.div>
+                <span className="theme-pill-glow" />
+              </motion.button>
             );
           })}
         </div>

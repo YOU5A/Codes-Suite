@@ -91,7 +91,12 @@ const FluidBackground: FC<FluidBackgroundProps> = ({
     };
     document.addEventListener("visibilitychange", visHandler);
 
-    // 启动
+    // Apply cover color synchronously before first render to avoid flash
+    if (coverColor) {
+      renderer.setCoverColor(coverColor);
+    }
+
+    // Start if enabled
     if (mergedConfig.enabled) {
       renderer.start();
     }
@@ -106,10 +111,12 @@ const FluidBackground: FC<FluidBackgroundProps> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // ---------- Props 变更 ----------
+  // ---------- Props change ----------
 
   useEffect(() => {
-    rendererRef.current?.updateConfig({
+    const r = rendererRef.current;
+    if (!r) return;
+    r.updateConfig({
       preset,
       intensity,
       quality,
@@ -119,6 +126,12 @@ const FluidBackground: FC<FluidBackgroundProps> = ({
       blurAmount,
       colorMode,
     });
+    // Explicitly start/stop based on enabled flag
+    if (enabled === false) {
+      r.stop();
+    } else if (enabled === true) {
+      r.start();
+    }
   }, [preset, intensity, quality, interactive, enabled, speedMultiplier, blurAmount, colorMode]);
 
   // ??????
@@ -169,7 +182,6 @@ const FluidBackground: FC<FluidBackgroundProps> = ({
         zIndex: 0,
         pointerEvents: mergedConfig.interactive ? "auto" : "none",
         opacity: mergedConfig.intensity,
-        filter: mergedConfig.blurAmount > 0 ? `blur(${mergedConfig.blurAmount * 20}px)` : "none",
       }}
       onPointerMove={handlePointerMove}
       onClick={handleClick}

@@ -124,6 +124,10 @@ export class FluidRenderer {
       const themeName = document.documentElement.dataset.themeName;
       return PRESETS[resolveAutoPreset(themeName)] ?? PRESETS.aurora;
     }
+    if (presetId === "cover") {
+      // "cover" preset: use cover palette if available, fallback to aurora
+      return PRESETS.cover ?? PRESETS.aurora;
+    }
     return PRESETS[presetId] ?? PRESETS.aurora;
   }
 
@@ -134,13 +138,19 @@ export class FluidRenderer {
     const count = p.blobCount;
     this.blobs = [];
 
+    // When cover/auto mode and cover palette is available, use cover colors
+    const isCoverLike = this.config.colorMode === "cover" || this.config.colorMode === "auto";
+    const colorSource = (isCoverLike && this.coverPalette)
+      ? this.coverPalette.colors
+      : p.palette.colors;
+
     for (let i = 0; i < count; i++) {
       this.blobs.push({
         x: Math.random(),
         y: Math.random(),
         targetX: Math.random(),
         targetY: Math.random(),
-        color: pick(p.palette.colors),
+        color: colorSource[i % colorSource.length],
         radius: rand(p.blobRadius[0], p.blobRadius[1]),
         opacity: rand(p.blobOpacity[0], p.blobOpacity[1]),
       });
@@ -152,22 +162,36 @@ export class FluidRenderer {
   updateConfig(config: Partial<FluidConfig>): void {
     const prevPreset = this.config.preset;
     const prevColorMode = this.config.colorMode;
+    const prevEnabled = this.config.enabled;
     Object.assign(this.config, config);
+
+    // Handle enabled toggle - just start/stop, no DOM manipulation
+    if (config.enabled !== undefined && config.enabled !== prevEnabled) {
+      if (config.enabled) {
+        if (!this.running) this.start();
+      } else {
+        this.stop();
+        // Clear canvas to blank when disabled
+        const ctx = this.ctx;
+        if (ctx && this.canvas) {
+          ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        }
+      }
+    }
 
     if (config.preset !== undefined && config.preset !== prevPreset) {
       this.currentPreset = this.resolvePreset(config.preset);
       this.spawnBlobs();
     }
-    // Switch to/from cover mode: reassign blob colors
+    // Switch to/from cover/auto mode: reassign blob colors
     if (config.colorMode !== undefined && config.colorMode !== prevColorMode) {
-      if (config.colorMode === "cover" && this.coverPalette) {
-        // Apply cover palette to existing blobs
+      const isCoverLike = (mode: string) => mode === "cover" || mode === "auto";
+      if (isCoverLike(config.colorMode) && this.coverPalette) {
         const paletteColors = this.coverPalette.colors;
         for (let i = 0; i < this.blobs.length; i++) {
           this.blobs[i].color = paletteColors[i % paletteColors.length];
         }
-      } else if (prevColorMode === "cover" && config.colorMode !== "cover") {
-        // Restore preset colors
+      } else if (isCoverLike(prevColorMode) && !isCoverLike(config.colorMode)) {
         this.spawnBlobs();
       }
     }
@@ -185,6 +209,8 @@ export class FluidRenderer {
   /** 在指定位置注入光斑扰动 */
   splat(nx: number, ny: number, force = 1.0): void {
     if (!this.config.interactive) return;
+    // Guard against NaN from pointer events on zero-size canvas
+    if (!Number.isFinite(nx) || !Number.isFinite(ny)) return;
     // 随机扰动附近光斑的 target
     for (const blob of this.blobs) {
       const dx = blob.x - nx;
@@ -202,13 +228,13 @@ export class FluidRenderer {
 
   // ---------- 封面颜色 ----------
 
-  /** Set cover dominant color for colorMode="cover" */
+  /** Set cover dominant color - used by cover and auto color modes */
   setCoverColor(color: [number, number, number] | null): void {
     this.coverColor = color;
     if (color) {
       this.coverPalette = generateCoverPalette(color);
-      // Reassign blob colors from cover palette (only when color changes, not every frame)
-      if (this.config.colorMode === "cover" && this.blobs.length > 0) {
+      // Reassign blob colors when in cover or auto mode
+      if ((this.config.colorMode === "cover" || this.config.colorMode === "auto") && this.blobs.length > 0) {
         const paletteColors = this.coverPalette.colors;
         for (let i = 0; i < this.blobs.length; i++) {
           this.blobs[i].color = paletteColors[i % paletteColors.length];
@@ -216,8 +242,8 @@ export class FluidRenderer {
       }
     } else {
       this.coverPalette = null;
-      // Restore preset colors when cover is removed
-      if (this.config.colorMode === "cover") {
+      // Restore preset colors when cover is removed while in cover/auto mode
+      if (this.config.colorMode === "cover" || this.config.colorMode === "auto") {
         this.spawnBlobs();
       }
     }
@@ -292,13 +318,18 @@ export class FluidRenderer {
 
   // ---------- 光斑运动 ----------
 
-  private updateBlobs(dt: number): void {
+    private updateBlobs(dt: number): void {
     const p = this.currentPreset;
-    const speed = p.flowSpeed * this.config.speedMultiplier * (dt / 1000);
+    const baseSpeed = p.flowSpeed * this.config.speedMultiplier * (dt / 1000);
+    // Clamp lerp factor to prevent overshoot at high speeds
+    const speed = Math.min(baseSpeed, 0.95);
     this.elapsedSinceDrift += dt;
 
-    // 定期更新目标位置
-    if (this.elapsedSinceDrift >= p.driftInterval) {
+    // Scale drift interval inversely with speed for smooth motion at any speed
+    const effectiveDriftInterval = p.driftInterval / Math.sqrt(Math.max(0.1, this.config.speedMultiplier));
+
+    // Regularly update target positions
+    if (this.elapsedSinceDrift >= effectiveDriftInterval) {
       this.elapsedSinceDrift = 0;
       for (const blob of this.blobs) {
         blob.targetX = Math.max(0.05, Math.min(0.95, blob.targetX + rand(-p.jitter, p.jitter)));
@@ -306,11 +337,14 @@ export class FluidRenderer {
       }
     }
 
-    // 移动光斑
+    // Move blobs toward targets
     for (const blob of this.blobs) {
       const noiseVal = smoothNoise(blob.x, blob.y, this.globalTime * 0.001) * 0.3;
-      blob.x = lerp(blob.x, blob.targetX + noiseVal, speed * 0.8);
-      blob.y = lerp(blob.y, blob.targetY + noiseVal, speed * 0.8);
+      const nx = lerp(blob.x, blob.targetX + noiseVal, speed * 0.8);
+      const ny = lerp(blob.y, blob.targetY + noiseVal, speed * 0.8);
+      // Clamp to prevent NaN propagation
+      blob.x = Number.isFinite(nx) ? Math.max(0, Math.min(1, nx)) : blob.x;
+      blob.y = Number.isFinite(ny) ? Math.max(0, Math.min(1, ny)) : blob.y;
     }
   }
 
@@ -341,21 +375,33 @@ export class FluidRenderer {
     offCtx.clearRect(0, 0, offW, offH);
 
     // 2. 填充背景底色
-    // Use cover palette when in cover mode, otherwise use preset palette
-    const palette = (this.config.colorMode === "cover" && this.coverPalette)
-      ? this.coverPalette
+    // Auto mode: use cover palette when available, otherwise preset
+    // Cover mode: force cover palette (fallback to preset if unavailable)
+    const useCoverPalette = (this.config.colorMode === "cover" || this.config.colorMode === "auto") && this.coverPalette;
+    const palette = useCoverPalette
+      ? this.coverPalette!
       : this.currentPreset.palette;
     const bg = palette.background;
     offCtx.fillStyle = `rgb(${bg[0]},${bg[1]},${bg[2]})`;
     offCtx.fillRect(0, 0, offW, offH);
 
     // 3. 绘制光斑
+        const isCoverMode = this.config.colorMode === "cover" && !!this.coverPalette;
+
     for (const blob of this.blobs) {
+      // Guard against NaN/Infinity propagation from splat or updateBlobs
+      if (!Number.isFinite(blob.x) || !Number.isFinite(blob.y) || !Number.isFinite(blob.radius)) continue;
+      if (!Number.isFinite(offW) || !Number.isFinite(offH)) break;
+
       const cx = blob.x * offW;
       const cy = blob.y * offH;
       const r = blob.radius * Math.min(offW, offH);
+
+      // r must be positive for createRadialGradient
+      if (!Number.isFinite(r) || r <= 0) continue;
+
       const [cr, cg, cb] = blob.color;
-      const alpha = blob.opacity * this.config.intensity;
+      const alpha = blob.opacity * this.config.intensity * (isCoverMode ? 1.5 : 1.0);
 
       const grad = offCtx.createRadialGradient(cx, cy, 0, cx, cy, r);
       grad.addColorStop(0, `rgba(${cr},${cg},${cb},${alpha})`);
@@ -366,10 +412,10 @@ export class FluidRenderer {
       offCtx.fillRect(cx - r, cy - r, r * 2, r * 2);
     }
 
-    // 4. 将离屏画布回绘到主画布（浏览器自动双线性插值放大，形成柔和过渡）
+        // 4. Blit offscreen to main canvas (browser auto-bilinear upscales for soft look)
     ctx.clearRect(0, 0, w, h);
 
-    // 应用模糊效果
+    // Apply blur via canvas filter (GPU-accelerated in modern Chromium)
     if (this.config.blurAmount > 0) {
       ctx.filter = `blur(${this.config.blurAmount * 20}px)`;
     } else {

@@ -18,6 +18,7 @@ import {
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useToast } from "@/contexts/ToastContext";
 import { useConfirm } from "@/contexts/ConfirmContext";
+import { useMusicPlayer } from "@/contexts/MusicPlayerContext";
 import type { MusicMetadata, PlaybackState, Page } from "@/types";
 import { useTheme } from "@/hooks/useTheme";
 import { getAnimDuration, EASE_OUT } from "@/utils/animations";
@@ -113,7 +114,6 @@ export default function MusicManager({ onNavigate, fluidSettings: externalSettin
   const [folder, setFolder] = useState("");
   const [files, setFiles] = useState<string[]>([]);
   const [selectedFile, setSelectedFile] = useState("");
-  const [playingFile, setPlayingFile] = useState("");
   const [metadata, setMetadata] = useState<MusicMetadata | null>(null);
   const [coverB64, setCoverB64] = useState<string | null>(null);
   const [newCoverPath, setNewCoverPath] = useState("");
@@ -126,12 +126,8 @@ export default function MusicManager({ onNavigate, fluidSettings: externalSettin
   const [tagGenre, setTagGenre] = useState("");
   const [renameName, setRenameName] = useState("");
 
-  const [playback, setPlayback] = useState<PlaybackState>({
-    position_ms: 0, length_ms: 0, is_playing: false, is_paused: false, is_open: false,
-  });
-  const [volume, setVolume] = useState(80);
+  const { audioState, playingFile, volume, playFile: contextPlayFile, toggle: contextToggle, stop: contextStop, seek: contextSeek, setVolume, fmtTime } = useMusicPlayer();
   const [saving, setSaving] = useState(false);
-  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const progressRef = useRef<HTMLDivElement | null>(null);
   const hasScanned = useRef(false);
   const [isDragging, setIsDragging] = useState(false);
@@ -163,44 +159,41 @@ export default function MusicManager({ onNavigate, fluidSettings: externalSettin
     return () => { cancelled = true; };
   }, [coverB64]);
 
+  // On mount, clear any stale cover color from previous session (since playback doesn't persist)
+  useEffect(() => {
+    if (!coverB64) {
+      localStorage.removeItem("fluidCoverColor");
+      window.dispatchEvent(new CustomEvent("fluidCoverColorChanged", { detail: null }));
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Mount: restore folder, check playback, load volume
+  // Mount: restore folder, volume, and playing file state
   useEffect(() => {
     const init = async () => {
-      const cfg = await window.electronAPI?.python.call('config.get').catch(() => null);
-      if (cfg?.musicVolume !== undefined) {
-        setVolume(cfg.musicVolume);
-        window.electronAPI?.python.call('music.set_volume', { volume: cfg.musicVolume }).catch(() => {});
-      }
       try {
         const saved = localStorage.getItem('music_folder');
         if (saved && !hasScanned.current) { hasScanned.current = true; setFolder(saved); doScan(saved); }
       } catch {}
-      try {
-        const pos = await window.electronAPI?.python.call('music.get_position').catch(() => null);
-        if (pos && !pos.error && (pos.is_playing || pos.is_paused)) {
-          setPlayback({
-            position_ms: pos.position_ms ?? 0,
-            length_ms: pos.length_ms ?? 0,
-            is_playing: pos.is_playing ?? false,
-            is_paused: pos.is_paused ?? false,
-            is_open: pos.is_open ?? false,
-          });
-          if (pos.is_playing) startPoll();
-        }
-        // Also restore current file selection
+      // If a file was playing before switching pages, restore its selection
+      if (playingFile) {
+        setSelectedFile(playingFile);
         try {
-          const cf = await window.electronAPI?.python.call('music.get_current_file').catch(() => null);
-          if (cf?.filepath && !cf.error) {
-            selectFile(cf.filepath);
-            setPlayingFile(cf.filepath);
+          const m = await window.electronAPI?.python.call("music.get_metadata", { filepath: playingFile });
+          if (m && !m.error) {
+            setMetadata(m);
+            setTagTitle(m.title ?? ""); setTagArtist(m.artist ?? "");
+            setTagAlbum(m.album ?? ""); setTagYear(m.year ?? ""); setTagGenre(m.genre ?? "");
           }
+          const c = await window.electronAPI?.python.call("music.extract_cover", { filepath: playingFile });
+          setCoverB64(c?.cover ?? null);
         } catch {}
-      } catch {}
+        setNewCoverPath(""); setCoverPreviewB64(null);
+        const fname = playingFile.split("\\").pop() || playingFile;
+        setRenameName(fname.replace(/\.[^.]+$/, ""));
+      }
     };
     init();
-    return () => { if (pollRef.current) clearInterval(pollRef.current); };
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── File ──
 
@@ -239,107 +232,75 @@ export default function MusicManager({ onNavigate, fluidSettings: externalSettin
     setRenameName(fname.replace(/\.[^.]+$/, ""));
   };
 
-  // ── Playback ──
-  const refresh = async () => {
-    const r = await window.electronAPI?.python.call("music.get_position");
-    if (r && !r.error) {
-      const playing = r.is_playing ?? false;
-      const paused = r.is_paused ?? false;
-      setPlayback({ position_ms: r.position_ms ?? 0, length_ms: r.length_ms ?? 0, is_playing: playing, is_paused: paused, is_open: r.is_open ?? false });
-      if (!playing && !paused) stopPoll();
-    }
-  };
-  const startPoll = () => { stopPoll(); pollRef.current = setInterval(refresh, 250); };
-  const stopPoll = () => { if (pollRef.current) { clearInterval(pollRef.current); pollRef.current = null; } };
-  // Drag tracking for progress bar
   useEffect(() => {
     if (!isDragging) return;
     const onMove = (e: MouseEvent) => doSeek(e.clientX);
     const onUp = () => setIsDragging(false);
-    window.addEventListener('mousemove', onMove);
-    window.addEventListener('mouseup', onUp);
+    window.addEventListener("mousemove", onMove);
+    window.addEventListener("mouseup", onUp);
     return () => {
-      window.removeEventListener('mousemove', onMove);
-      window.removeEventListener('mouseup', onUp);
+      window.removeEventListener("mousemove", onMove);
+      window.removeEventListener("mouseup", onUp);
     };
-  }, [isDragging, playback.length_ms]);
-  const playFile = async (fp: string) => {
+  }, [isDragging]);
 
+  const playFile = (fp: string) => {
     if (!fp) return;
     setSelectedFile(fp);
-    const m = await window.electronAPI?.python.call("music.get_metadata", { filepath: fp });
-    if (m && !m.error) {
-      setMetadata(m);
-      setTagTitle(m.title ?? ""); setTagArtist(m.artist ?? "");
-      setTagAlbum(m.album ?? ""); setTagYear(m.year ?? "");
-    }
-    const c = await window.electronAPI?.python.call("music.extract_cover", { filepath: fp });
-    setCoverB64(c?.cover ?? null);
-    setNewCoverPath(""); setCoverPreviewB64(null);
-    const fname = fp.split("\\").pop() || fp;
-    setRenameName(fname.replace(/\.[^.]+$/, ""));
-    const r = await window.electronAPI?.python.call("music.play", { filepath: fp });
-    if (r && !r.error) {
-      setPlayingFile(fp);
-      setPlayback({ position_ms: 0, length_ms: r.length_ms ?? 0, is_playing: true, is_paused: false, is_open: true });
-      startPoll();
-    }
+    (async () => {
+      const m = await window.electronAPI?.python.call("music.get_metadata", { filepath: fp });
+      if (m && !m.error) {
+        setMetadata(m);
+        setTagTitle(m.title ?? ""); setTagArtist(m.artist ?? "");
+        setTagAlbum(m.album ?? ""); setTagYear(m.year ?? ""); setTagGenre(m.genre ?? "");
+      }
+      const c = await window.electronAPI?.python.call("music.extract_cover", { filepath: fp });
+      setCoverB64(c?.cover ?? null);
+      setNewCoverPath(""); setCoverPreviewB64(null);
+      const fname = fp.split("\\").pop() || fp;
+      setRenameName(fname.replace(/\.[^.]+$/, ""));
+    })();
+    contextPlayFile(fp);
   };
-  const toggle = async () => {
-    if (!playback.is_open) {
-      if (selectedFile) playFile(selectedFile); else showToast(tx.noFileSelected, "warning");
+
+  const toggle = () => {
+    if (!selectedFile && !playingFile) {
+      showToast(tx.noFileSelected, "warning");
       return;
     }
-    // If a different file is selected, play it instead of toggling
-    if (playingFile && selectedFile !== playingFile) {
+    if (selectedFile && selectedFile !== playingFile) {
       playFile(selectedFile);
       return;
     }
-    // Same file - just toggle pause/resume
-    const r = await window.electronAPI?.python.call("music.pause");
-    if (r && !r.error) {
-      const p = r.is_playing ?? false;
-      setPlayback(prev => ({ ...prev, is_playing: p, is_paused: !p }));
-      p ? startPoll() : stopPoll();
-    }
+    contextToggle(selectedFile);
   };
-  const stop = async () => {
-    await window.electronAPI?.python.call("music.stop");
-    stopPoll();
-    setPlayingFile("");
-    setPlayback({ position_ms: 0, length_ms: 0, is_playing: false, is_paused: false, is_open: false });
+
+  const stop = () => {
+    contextStop();
   };
-  // Calculate seek target from mouse position
-  const calcSeekMs = (clientX: number): number => {
-    const bar = progressRef.current;
-    if (!bar) return 0;
-    const rect = bar.getBoundingClientRect();
-    const pct = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
-    return Math.floor(pct * (playback.length_ms || 100));
+
+  const doSeek = (clientX: number) => {
+    contextSeek(clientX, progressRef);
   };
-  const doSeek = async (clientX: number) => {
-    const ms = calcSeekMs(clientX);
-    await window.electronAPI?.python.call("music.seek", { position_ms: ms });
-    setPlayback(prev => ({ ...prev, position_ms: ms }));
-  };
+
   const handleProgressMouseDown = (e: React.MouseEvent) => {
     e.preventDefault();
     setIsDragging(true);
     doSeek(e.clientX);
   };
-  const changeVol = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const v = parseInt(e.target.value);
-    setVolume(v);
-    await window.electronAPI?.python.call("music.set_volume", { volume: v });
-    await window.electronAPI?.python.call("config.set", { musicVolume: v });
+
+  const changeVol = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setVolume(parseInt(e.target.value));
   };
 
-  const fmtTime = (ms: number) => {
-    if (!ms || ms <= 0) return "0:00";
-    const s = Math.floor(ms / 1000);
-    return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
+  const playback = {
+    get position_ms() { return Math.floor(audioState.pos * 1000); },
+    get length_ms() { return Math.floor((audioState.duration || 0) * 1000); },
+    get is_playing() { return audioState.playing; },
+    get is_paused() { return !audioState.playing && (audioState.pos > 0 || !!playingFile); },
+    get is_open() { return !!playingFile; },
   };
-  const pct = playback.length_ms > 0 ? (playback.position_ms / playback.length_ms) * 100 : 0;
+  const pct = (playback.length_ms > 0 && isFinite(playback.length_ms)) ? (playback.position_ms / playback.length_ms) * 100 : 0;
 
   // ── Tags ──
   const saveTags = async () => {

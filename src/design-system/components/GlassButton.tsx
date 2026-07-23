@@ -25,19 +25,19 @@ export interface GlassButtonProps extends Omit<HTMLMotionProps<"button">, "child
 }
 
 const sizeStyles: Record<ButtonSize, React.CSSProperties> = {
-  sm:  { padding: String(space[1]) + "px " + String(space[3]) + "px", fontSize: fontSizes.xs, borderRadius: radii.sm },
-  md:  { padding: String(space[2]) + "px " + String(space[4]) + "px", fontSize: fontSizes.sm, borderRadius: radii.md },
-  lg:  { padding: String(space[3]) + "px " + String(space[5]) + "px", fontSize: fontSizes.md, borderRadius: radii.md },
+  sm:  { padding: String(space[1]) + "px " + String(space[3]) + "px", fontSize: fontSizes.xs, borderRadius: 18 },
+  md:  { padding: String(space[2]) + "px " + String(space[4]) + "px", fontSize: fontSizes.sm, borderRadius: 20 },
+  lg:  { padding: String(space[3]) + "px " + String(space[5]) + "px", fontSize: fontSizes.md, borderRadius: 22 },
 };
 
 function variantBase(variant: ButtonVariant): React.CSSProperties {
   switch (variant) {
     case "primary":
-      return { background: "var(--accent)", color: "white", border: "none", fontWeight: 500, boxShadow: "0 2px 8px rgba(99,102,241,0.25)" };
+      return { background: "var(--accent)", color: "white", border: "none", fontWeight: 500, boxShadow: "0 2px 10px rgba(var(--accent-rgb), 0.2)" };
     case "secondary":
-      return { background: "var(--bg-secondary)", color: "var(--text-primary)", border: "1px solid var(--border-color)", fontWeight: 500, backdropFilter: "blur(15px)", WebkitBackdropFilter: "blur(15px)" };
+      return { background: "var(--bg-secondary)", color: "var(--text-primary)", border: "1.5px solid var(--border-color)", fontWeight: 500, backdropFilter: "blur(15px)", WebkitBackdropFilter: "blur(15px)" };
     case "danger":
-      return { background: "var(--danger)", color: "white", border: "none", fontWeight: 500, boxShadow: "0 2px 8px rgba(231,76,60,0.25)" };
+      return { background: "var(--danger)", color: "white", border: "none", fontWeight: 500, boxShadow: "0 2px 10px rgba(231,76,60,0.25)" };
     case "ghost":
       return { background: "transparent", color: "var(--text-secondary)", border: "none", backdropFilter: "none", WebkitBackdropFilter: "none" };
     case "input":
@@ -48,10 +48,10 @@ function variantBase(variant: ButtonVariant): React.CSSProperties {
 
 function hoverTarget(variant: ButtonVariant): TargetAndTransition | undefined {
   switch (variant) {
-    case "primary": return { background: "var(--accent-hover)", boxShadow: "0 4px 16px rgba(99,102,241,0.35)" };
-    case "secondary": return { background: "var(--bg-elevated)", borderColor: "var(--border-strong)", boxShadow: "0 4px 16px rgba(0,0,0,0.08)" };
-    case "danger": return { filter: "brightness(1.15)", boxShadow: "0 4px 16px rgba(231,76,60,0.35)" };
-    case "ghost": return { background: "var(--bg-tertiary)", color: "var(--text-primary)" };
+    case "primary": return { background: "var(--accent-hover)", boxShadow: "0 0 18px rgba(var(--accent-rgb), 0.4)" };
+    case "secondary": return { background: "var(--bg-elevated)", borderColor: "var(--accent)", boxShadow: "0 0 14px rgba(var(--accent-rgb), 0.15)" };
+    case "danger": return { filter: "brightness(1.15)", boxShadow: "0 0 18px rgba(231,76,60,0.4)" };
+    case "ghost": return { background: "var(--bg-tertiary)", color: "var(--text-primary)", borderRadius: 20 };
     case "input": return { borderColor: "var(--accent)", boxShadow: "0 0 0 3px var(--accent-bg)" };
     default: return undefined;
   }

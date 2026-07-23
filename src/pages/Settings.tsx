@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Sun, Moon, Monitor, Globe, Palette,
@@ -39,12 +39,18 @@ const t: Record<Language, Record<string, string>> = {
     rememberPos: "记住窗口位置",
     interface: "界面设置",
     sidebarWidth: "侧边栏宽度",
+    sidebarWidthSub: "Sidebar Width",
     fontScale: "界面缩放",
+    fontScaleSub: "UI Scale",
     compact: "紧凑模式",
     standard: "中等模式",
     large: "标准",
     resetSettings: "重置所有设置",
+    resetToDefault: "恢复默认",
     resetConfirm: "确定要恢复默认设置吗？",
+    themeTitle: "选择配色方案",
+    themeSub: "Choose a color scheme",
+    themeReset: "恢复默认",
     about: "关于",
     aboutTitle: "Codes Suite",
     aboutVersion: "版本 1.3.0",
@@ -81,12 +87,18 @@ const t: Record<Language, Record<string, string>> = {
     rememberPos: "Remember Window Position",
     interface: "Interface",
     sidebarWidth: "Sidebar Width",
+    sidebarWidthSub: "Adjust sidebar width",
     fontScale: "UI Scale",
+    fontScaleSub: "Adjust interface scale",
     compact: "Compact",
     standard: "Medium",
     large: "Standard",
     resetSettings: "Reset All Settings",
+    resetToDefault: "Reset to Default",
     resetConfirm: "Restore default settings?",
+    themeTitle: "Choose Theme",
+    themeSub: "Choose a color scheme",
+    themeReset: "Reset to Default",
     about: "About",
     aboutTitle: "Codes Suite",
     aboutVersion: "Version 1.3.0",
@@ -110,6 +122,18 @@ const themeDropdownOptions: { value: Theme; icon: React.ReactNode; key: string }
   { value: "emerald", icon: <Palette size={16} />, key: "emerald" },
   { value: "crimson", icon: <Moon size={16} />, key: "crimson" },
 ];
+
+const themeColorMap: Record<Theme, string> = {
+  light: "#0071e3",
+  dark: "#0a84ff",
+  auto: "transparent",
+  graphite: "#5856d6",
+  midnight: "#6366f1",
+  ocean: "#0066cc",
+  emerald: "#059669",
+  crimson: "#f43f5e",
+};
+
 
 function ToggleRow({ icon, label, active, onChange }: {
   icon: React.ReactNode; label: string; active: boolean; onChange: (v: boolean) => void;
@@ -170,6 +194,27 @@ export default function Settings() {
     resetSettings();
     showToast(tx.resetConfirm, "success");
   };
+
+  // 光标跟随白色光晕（匹配 GlassButton）
+  const setPillGlow = useCallback((el: HTMLElement, cx: number, cy: number) => {
+    const r = el.getBoundingClientRect();
+    if (r.width === 0 || r.height === 0) return;
+    el.style.setProperty("--pill-gx", ((cx - r.left) / r.width) * 100 + "%");
+    el.style.setProperty("--pill-gy", ((cy - r.top) / r.height) * 100 + "%");
+    el.style.setProperty("--pill-go", "1");
+  }, []);
+
+  const clearPillGlow = useCallback((el: HTMLElement) => {
+    el.style.setProperty("--pill-go", "0");
+  }, []);
+
+  const handlePillMove = useCallback((e: React.MouseEvent<HTMLButtonElement>) => {
+    setPillGlow(e.currentTarget, e.clientX, e.clientY);
+  }, [setPillGlow]);
+
+  const handlePillLeave = useCallback((e: React.MouseEvent<HTMLButtonElement>) => {
+    clearPillGlow(e.currentTarget);
+  }, [clearPillGlow]);
 
 
   const currentThemeOption = themeDropdownOptions.find(o => o.value === theme) ?? themeDropdownOptions[0];
@@ -376,29 +421,121 @@ export default function Settings() {
       </GlassCard>
 
       {/* ── Theme Picker Modal ── */}
-      <GlassModal open={themePickerOpen} onClose={() => setThemePickerOpen(false)} maxWidth={360}>
-        <h3 style={{
-          fontSize: fontSizes.lg, fontWeight: 600, color: "var(--text-primary)",
-          margin: 0, letterSpacing: "-0.01em",
-        }}>
-          {tx.themeLabel}
-        </h3>
-        <div style={{
-          display: "grid", gridTemplateColumns: "1fr 1fr", gap: space[2],
-        }}>
-          {themeDropdownOptions.map((opt) => (
-            <GlassButton
-              key={opt.value}
-              variant={theme === opt.value ? "primary" : "secondary"}
-              size="sm"
-              inline={false}
-              onClick={() => { setTheme(opt.value); setThemePickerOpen(false); }}
-            >
-              {opt.icon}
-              {tx[opt.key]}
-            </GlassButton>
-          ))}
+      <GlassModal open={themePickerOpen} onClose={() => setThemePickerOpen(false)} maxWidth={400}>
+        {/* Header */}
+        <div style={{ marginBottom: 14 }}>
+          <h3 style={{
+            fontSize: fontSizes.lg, fontWeight: 600, color: "var(--text-primary)",
+            margin: "0 0 2px 0", letterSpacing: "-0.01em",
+          }}>
+            {tx.themeLabel}
+          </h3>
+          <p style={{ fontSize: 12, color: "var(--text-tertiary)", margin: 0 }}>
+            {tx.themeSub}
+          </p>
         </div>
+
+        <div style={{ height: 1, background: "var(--border-color)", opacity: 0.5, marginBottom: 16 }} />
+
+        {/* Theme pills */}
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+          {themeDropdownOptions.map((opt) => {
+            const active = theme === opt.value;
+            const colorDot = themeColorMap[opt.value];
+            return (
+              <button
+                className="theme-pill"
+                key={opt.value}
+                onClick={() => { setTheme(opt.value); setThemePickerOpen(false); }}
+                onMouseMove={handlePillMove}
+                onMouseEnter={handlePillMove}
+                onMouseLeave={handlePillLeave}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 8,
+                  padding: "8px 16px",
+                  borderRadius: 20,
+                  border: `1.5px solid ${active ? "var(--accent)" : "var(--border-color)"}`,
+                  background: active ? "var(--accent-bg)" : "transparent",
+                  color: active ? "var(--accent)" : "var(--text-secondary)",
+                  fontSize: 13,
+                  fontWeight: active ? 600 : 400,
+                  cursor: "pointer",
+                  transition: "all var(--transition-fast)",
+                  lineHeight: 1,
+                }}
+              >
+                <span style={{ display: "flex", alignItems: "center" }}>
+                  {opt.icon}
+                </span>
+                {tx[opt.key]}
+                {opt.value !== "auto" ? (
+                  <span style={{
+                    width: 12, height: 12, borderRadius: "50%",
+                    background: colorDot,
+                    border: "1px solid rgba(128,128,128,0.3)",
+                    flexShrink: 0,
+                  }} />
+                ) : (
+                  <span style={{
+                    display: "flex",
+                    gap: 0,
+                    width: 14, height: 12,
+                    flexShrink: 0,
+                  }}>
+                    <span style={{
+                      width: 7, height: 12,
+                      borderRadius: "6px 0 0 6px",
+                      background: "#1C1C1E",
+                      border: "1px solid rgba(128,128,128,0.3)",
+                      borderRight: "none",
+                    }} />
+                    <span style={{
+                      width: 7, height: 12,
+                      borderRadius: "0 6px 6px 0",
+                      background: "#0a84ff",
+                      border: "1px solid rgba(128,128,128,0.3)",
+                      borderLeft: "none",
+                    }} />
+                  </span>
+                )}
+                <span className="theme-pill-glow" />
+              </button>
+            );
+          })}
+        </div>
+
+        <div style={{ height: 1, background: "var(--border-color)", opacity: 0.5, margin: "16px 0" }} />
+
+        {/* Reset */}
+        <button
+          className="theme-pill"
+          onClick={() => { setTheme("auto"); setThemePickerOpen(false); }}
+          onMouseMove={handlePillMove}
+          onMouseEnter={handlePillMove}
+          onMouseLeave={handlePillLeave}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 6,
+            width: "100%",
+            padding: "7px 0",
+            borderRadius: 16,
+            border: "1.5px solid var(--border-color)",
+            background: "transparent",
+            color: "var(--text-tertiary)",
+            fontSize: 12,
+            fontWeight: 500,
+            cursor: "pointer",
+            transition: "all var(--transition-fast)",
+          }}
+        >
+          <RotateCcw size={12} />
+          {tx.themeReset}
+          <span className="theme-pill-glow" />
+        </button>
       </GlassModal>
     </motion.div>
   );

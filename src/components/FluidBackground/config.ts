@@ -21,6 +21,7 @@ export type FluidPresetId =
   | "nebula"
   | "plasma"
   | "forest"
+  | "cover"
   | "custom";
 
 export const DEFAULT_CONFIG: FluidConfig = {

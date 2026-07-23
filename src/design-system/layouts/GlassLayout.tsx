@@ -1,17 +1,16 @@
-/**
+﻿/**
  * GlassLayout — Root Application Shell
  *
  * The outermost layout container that establishes:
+ * - FluidBackground layer (Canvas 2D blob fluid)
  * - Background layer (gradient mesh + animated light)
  * - Content area with backdrop blur and border
  * - Proper z-index stacking for titlebar, sidebar, and main
- *
- * Designed to replace the inline layout in App.tsx
- * while preserving all routing, state, and logic.
  */
 
 import { type ReactNode } from "react";
 import { GlassBackground, type GlassBackgroundProps } from "./GlassBackground";
+import FluidBackground from "../../components/FluidBackground";
 
 export interface GlassLayoutProps {
   children?: ReactNode;
@@ -35,10 +34,13 @@ export function GlassLayout({
         isolation: "isolate",
       }}
     >
-      {/* Depth layer 0: animated background */}
+      {/* Depth layer 0: fluid background (Canvas) */}
+      <FluidBackground preset="auto" intensity={0.6} />
+
+      {/* Depth layer 1: gradient mesh overlay */}
       <GlassBackground {...background} />
 
-      {/* Depth layer 1: content shell */}
+      {/* Depth layer 2+: content shell */}
       <div
         className={"app-root" + (className ? " " + className : "")}
       >

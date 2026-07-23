@@ -108,6 +108,7 @@ function createWindow() {
       contextIsolation: true,
       nodeIntegration: false,
       sandbox: false,
+      webSecurity: false,
     },
   };
 
@@ -308,6 +309,7 @@ function createTray() {
 
 // ---- App lifecycle ----
 app.whenReady().then(() => {
+
   setupIPC();
   startPythonBridge();
   createWindow();

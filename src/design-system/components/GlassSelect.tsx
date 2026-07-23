@@ -1,18 +1,19 @@
 /**
- * GlassSelect — Liquid Glass Select / Dropdown
+ * GlassSelect — Liquid Glass Fluid Dropdown
  *
- * A native-like select styled with glass materials.
- * Uses portal-based dropdown (like GlassModal) to avoid
- * clipping from overflow:auto parents (e.g. GlassMain).
- *
- * Trigger styling matches GlassButton secondary variant exactly.
+ * FluidSettingsPanel-style dropdown with:
+ * - Pill-shaped option buttons with white cursor glow
+ * - High-blur glass panel with separators
+ * - Optional title/subtitle header
+ * - Optional reset button
+ * - Portal-based rendering to avoid clipping
  */
 
 import { useState, useRef, useEffect, useMemo, useCallback, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import type { Transition } from "framer-motion";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, RotateCcw } from "lucide-react";
 import { space, radii, fontSizes, zLayers } from "../tokens";
 import { useTheme } from "@/hooks/useTheme";
 
@@ -29,6 +30,14 @@ export interface GlassSelectProps {
   disabled?: boolean;
   fullWidth?: boolean;
   width?: number | string;
+  /** Fluid panel title (optional) */
+  title?: string;
+  /** Fluid panel subtitle (optional) */
+  subtitle?: string;
+  /** If provided, shows a reset button that calls this handler */
+  onReset?: () => void;
+  /** Reset button label */
+  resetLabel?: string;
 }
 
 export function GlassSelect({
@@ -39,6 +48,10 @@ export function GlassSelect({
   disabled = false,
   fullWidth = true,
   width,
+  title,
+  subtitle,
+  onReset,
+  resetLabel,
 }: GlassSelectProps) {
   const { settings } = useTheme();
   const dropdownTransition: Transition = useMemo(() => {
@@ -55,7 +68,7 @@ export function GlassSelect({
   const updateDropdownPos = useCallback(() => {
     if (triggerRef.current) {
       const rect = triggerRef.current.getBoundingClientRect();
-      setDropdownPos({ top: rect.bottom + 4, left: rect.left, width: rect.width });
+      setDropdownPos({ top: rect.bottom + 6, left: rect.left, width: Math.max(rect.width, 200) });
     }
   }, []);
 
@@ -86,17 +99,30 @@ export function GlassSelect({
   const selectedLabel =
     options.find((o) => o.value === value)?.label ?? placeholder;
 
-  /* Trigger — matches GlassButton secondary exactly */
+  // ── Cursor-following white glow ──
+  const setPillGlow = useCallback((el: HTMLElement, cx: number, cy: number) => {
+    const r = el.getBoundingClientRect();
+    if (r.width === 0 || r.height === 0) return;
+    el.style.setProperty("--pill-gx", ((cx - r.left) / r.width) * 100 + "%");
+    el.style.setProperty("--pill-gy", ((cy - r.top) / r.height) * 100 + "%");
+    el.style.setProperty("--pill-go", "1");
+  }, []);
+
+  const clearPillGlow = useCallback((el: HTMLElement) => {
+    el.style.setProperty("--pill-go", "0");
+  }, []);
+
+  /* ── Trigger — pill-shaped ── */
   const triggerStyle: React.CSSProperties = {
     display: "inline-flex",
     alignItems: "center",
     justifyContent: "space-between",
-    gap: 6,
+    gap: 8,
     background: "var(--bg-secondary)",
     color: value ? "var(--text-primary)" : "var(--text-tertiary)",
-    border: "1px solid var(--border-color)",
-    borderRadius: radii.md,
-    padding: String(space[2]) + "px " + String(space[4]) + "px",
+    border: "1.5px solid var(--border-color)",
+    borderRadius: 20,
+    padding: "7px 16px",
     fontSize: fontSizes.sm,
     fontWeight: 500,
     cursor: disabled ? "not-allowed" : "pointer",
@@ -110,80 +136,145 @@ export function GlassSelect({
     boxShadow: open ? "0 0 0 3px var(--accent-bg)" : "none",
   };
 
-  /* Dropdown panel — portals to body, fixed positioning */
-  const dropdownStyle: React.CSSProperties = {
+  /* ── Dropdown panel — fluid glass ── */
+  const panelStyle: React.CSSProperties = {
     position: "fixed",
     top: dropdownPos.top,
     left: dropdownPos.left,
     width: dropdownPos.width,
     zIndex: zLayers.tooltip,
     background: "var(--bg-elevated)",
-    backdropFilter: "blur(45px) saturate(2.0)",
-    WebkitBackdropFilter: "blur(45px) saturate(2.0)",
+    backdropFilter: "blur(50px) saturate(2.5)",
+    WebkitBackdropFilter: "blur(50px) saturate(2.5)",
     border: "1px solid var(--border-strong)",
-    borderRadius: radii.md,
-    padding: 4,
-    boxShadow: "0 8px 32px rgba(0,0,0,0.14), 0 2px 8px rgba(0,0,0,0.08)",
+    borderRadius: radii.lg,
+    padding: 14,
+    boxShadow: "0 12px 40px rgba(0,0,0,0.18), 0 4px 12px rgba(0,0,0,0.08)",
     display: "flex",
     flexDirection: "column",
-    gap: 1,
-    maxHeight: 240,
+    gap: 0,
+    maxHeight: 320,
     overflowY: "auto",
   };
 
-  const optionBase: React.CSSProperties = {
-    padding: String(space[1] + 2) + "px " + String(space[3]) + "px",
-    fontSize: fontSizes.xs,
-    borderRadius: radii.sm,
-    cursor: "pointer",
-    color: "var(--text-primary)",
-    background: "transparent",
-    border: "none",
-    textAlign: "left",
-    width: "100%",
-    transition: "background var(--transition-fast) ease",
+  const separatorStyle: React.CSSProperties = {
+    height: 1,
+    background: "var(--border-color)",
+    opacity: 0.5,
+    margin: "10px 0",
   };
 
   const dropdownMenu = (
     <motion.div
       ref={dropdownRef}
       variants={{
-        hidden: { opacity: 0, y: -4, scale: 0.96 },
+        hidden: { opacity: 0, y: -6, scale: 0.95 },
         visible: { opacity: 1, y: 0, scale: 1 },
-        exit: { opacity: 0, y: -4, scale: 0.96 },
+        exit: { opacity: 0, y: -6, scale: 0.95 },
       }}
       initial="hidden"
       animate="visible"
       exit="exit"
       transition={dropdownTransition}
-      style={dropdownStyle}
+      style={panelStyle}
     >
-      {options.map((opt) => {
-        const isActive = opt.value === value;
-        return (
+      {/* Header */}
+      {(title || subtitle) && (
+        <>
+          <div style={{ marginBottom: 2 }}>
+            {title && (
+              <div style={{ fontSize: fontSizes.md, fontWeight: 600, color: "var(--text-primary)", letterSpacing: "-0.01em" }}>
+                {title}
+              </div>
+            )}
+            {subtitle && (
+              <div style={{ fontSize: 11, color: "var(--text-tertiary)", marginTop: 1 }}>
+                {subtitle}
+              </div>
+            )}
+          </div>
+          <div style={separatorStyle} />
+        </>
+      )}
+
+      {/* Options as fluid pills */}
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+        {options.map((opt) => {
+          const active = opt.value === value;
+          return (
+            <button
+              key={opt.value}
+              className="theme-pill"
+              onClick={() => {
+                onChange(opt.value);
+                setOpen(false);
+              }}
+              onMouseMove={(e) => setPillGlow(e.currentTarget, e.clientX, e.clientY)}
+              onMouseEnter={(e) => setPillGlow(e.currentTarget, e.clientX, e.clientY)}
+              onMouseLeave={(e) => clearPillGlow(e.currentTarget)}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 6,
+                padding: "6px 14px",
+                borderRadius: 20,
+                border: `1.5px solid ${active ? "var(--accent)" : "var(--border-color)"}`,
+                background: active ? "var(--accent-bg)" : "transparent",
+                color: active ? "var(--accent)" : "var(--text-secondary)",
+                fontSize: 12,
+                fontWeight: active ? 600 : 400,
+                cursor: "pointer",
+                transition: "all var(--transition-fast) ease",
+                lineHeight: 1,
+                fontFamily: "inherit",
+                outline: "none",
+              }}
+            >
+              {opt.label}
+              <span className="theme-pill-glow" />
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Reset button */}
+      {onReset && (
+        <>
+          <div style={separatorStyle} />
           <button
-            key={opt.value}
+            className="theme-pill"
             onClick={() => {
-              onChange(opt.value);
+              onReset();
               setOpen(false);
             }}
+            onMouseMove={(e) => setPillGlow(e.currentTarget, e.clientX, e.clientY)}
+            onMouseEnter={(e) => setPillGlow(e.currentTarget, e.clientX, e.clientY)}
+            onMouseLeave={(e) => clearPillGlow(e.currentTarget)}
             style={{
-              ...optionBase,
-              background: isActive ? "var(--accent-bg)" : "transparent",
-              color: isActive ? "var(--accent)" : "var(--text-primary)",
-              fontWeight: isActive ? 500 : 400,
-            }}
-            onMouseEnter={(e) => {
-              if (!isActive) e.currentTarget.style.background = "var(--bg-tertiary)";
-            }}
-            onMouseLeave={(e) => {
-              if (!isActive) e.currentTarget.style.background = "transparent";
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 6,
+              width: "100%",
+              padding: "6px 0",
+              borderRadius: 16,
+              border: "1.5px solid var(--border-color)",
+              background: "transparent",
+              color: "var(--text-tertiary)",
+              fontSize: 11,
+              fontWeight: 500,
+              cursor: "pointer",
+              transition: "all var(--transition-fast) ease",
+              fontFamily: "inherit",
+              outline: "none",
             }}
           >
-            {opt.label}
+            <RotateCcw size={11} />
+            {resetLabel || "Reset"}
+            <span className="theme-pill-glow" />
           </button>
-        );
-      })}
+        </>
+      )}
     </motion.div>
   );
 

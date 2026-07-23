@@ -13,7 +13,6 @@ import importlib.util
 import traceback
 import base64
 import io
-import time
 import stat
 
 # --- Resolve resource paths relative to this script ---
@@ -33,7 +32,6 @@ if DATA_DIR not in sys.path:
 # --- Module lazy-loading cache ---
 _modules = {}
 _pending_language = "zh"
-
 
 def _get_module(name):
     """Lazy-import a .pyw module on first RPC call that needs it."""
@@ -66,25 +64,14 @@ def _get_module(name):
     _modules[name] = mod
     return mod
 
-
 def _get_w32():
     return _get_module("w32")
-
 
 def _get_app():
     return _get_module("app")
 
-
 def _get_fm():
     return _get_module("fm")
-
-
-def _get_player():
-    """Lazy-init AudioPlayer singleton on first music RPC call."""
-    if not hasattr(_get_player, "_instance"):
-        _get_player._instance = _get_fm().AudioPlayer()
-    return _get_player._instance
-
 
 def _get_w32_backup_manager():
     """Lazy-init BackupManager singleton on first backup RPC call."""
@@ -92,40 +79,17 @@ def _get_w32_backup_manager():
         _get_w32_backup_manager._instance = _get_w32().BackupManager(BACKUP_DIR)
     return _get_w32_backup_manager._instance
 
-
 # --- Bridge-layer music state ---
-# AudioPlayer's internal _seek_pos/_seek_time tracking is fragile.
-# We maintain our own state to ensure consistent position reporting.
-_music_playing = False
-_music_paused = False
-_music_seek_pos = 0
-_music_seek_time = 0.0
 
 # --- Backup directory ---
 BACKUP_DIR = r"C:\CodesSuite\backups"
-
 
 def _ensure_dir(path):
     """Lazily create directory only when actually needed (write operations)."""
     os.makedirs(path, exist_ok=True)
 
-
-def _stop_player():
-    """Stop the audio player and reset global state before file operations."""
-    global _music_playing, _music_paused, _music_seek_pos, _music_seek_time
-    try:
-        _get_player().stop()
-    except Exception:
-        pass
-    _music_playing = False
-    _music_paused = False
-    _music_seek_pos = 0
-    _music_seek_time = 0.0
-
-
 # ============================================================
 # RPC Method Handlers
-
 
 def handle_system_info(params):
     """Get system information"""
@@ -460,7 +424,6 @@ def handle_music_save_tags(params):
         return {"error": "Missing 'filepath' parameter"}
 
     try:
-        _stop_player()
         if os.path.isfile(filepath):
             os.chmod(filepath, stat.S_IWRITE)
         _get_fm().AudioFileProcessor.save_tags(
@@ -498,7 +461,6 @@ def handle_music_apply_cover(params):
         return {"error": "Missing parameters"}
 
     try:
-        _stop_player()
         if os.path.isfile(filepath):
             os.chmod(filepath, stat.S_IWRITE)
         with open(cover_path, "rb") as f:
@@ -515,7 +477,6 @@ def handle_music_remove_cover(params):
         return {"error": "Missing 'filepath' parameter"}
 
     try:
-        _stop_player()
         if os.path.isfile(filepath):
             os.chmod(filepath, stat.S_IWRITE)
         _get_fm().AudioFileProcessor.remove_cover(filepath)
@@ -550,109 +511,11 @@ def handle_music_rename(params):
         return {"error": "New name is same as current name"}
 
     try:
-        _stop_player()
         os.rename(filepath, new_path)
         return {"success": True, "new_path": new_path}
     except Exception as e:
         return {"error": str(e)}
 
-def handle_music_play(params):
-    """Start playing an audio file"""
-    global _music_playing, _music_paused, _music_seek_pos, _music_seek_time
-    filepath = params.get("filepath", "")
-    if not filepath:
-        return {"error": "Missing 'filepath' parameter"}
-
-    try:
-        _get_player().stop()
-        _get_player().close()
-        _get_player().open(filepath)
-        _get_player().play()
-        _music_playing = True
-        _music_paused = False
-        _music_seek_pos = 0
-        _music_seek_time = time.time()
-        return {
-            "position_ms": 0,
-            "length_ms": _get_player().length_ms,
-            "is_playing": True,
-            "is_paused": False,
-            "is_open": _get_player().is_open,
-        }
-    except Exception as e:
-        _music_playing = False
-        _music_paused = False
-        return {"error": str(e)}
-
-
-def handle_music_pause(params):
-    """Pause/resume playback"""
-    global _music_playing, _music_paused, _music_seek_pos, _music_seek_time
-    if _music_playing:
-        # Playing -> Pause: capture exact position
-        _music_seek_pos = int(_music_seek_pos + (time.time() - _music_seek_time) * 1000)
-        _music_playing = False
-        _music_paused = True
-        _get_player().pause()
-    elif _music_paused:
-        # Paused -> Resume: reset timing so pause duration is excluded
-        _music_playing = True
-        _music_paused = False
-        _music_seek_time = time.time()
-        _get_player().play()
-    return {
-        "is_playing": _music_playing,
-        "is_paused": _music_paused,
-        "is_open": _get_player().is_open,
-    }
-
-
-def handle_music_stop(params):
-    """Stop playback"""
-    global _music_playing, _music_paused, _music_seek_pos, _music_seek_time
-    _get_player().stop()
-    _music_playing = False
-    _music_paused = False
-    _music_seek_pos = 0
-    _music_seek_time = 0.0
-    return {"success": True}
-
-
-def handle_music_get_position(params):
-    """Get current playback position"""
-    global _music_playing, _music_seek_pos
-    position_ms = int(_music_seek_pos)
-    if _music_playing:
-        position_ms = int(_music_seek_pos + (time.time() - _music_seek_time) * 1000)
-        length_ms = _get_player().length_ms
-        if length_ms > 0 and position_ms >= length_ms:
-            position_ms = length_ms
-            _music_playing = False
-            _music_seek_pos = length_ms
-    return {
-        "position_ms": position_ms,
-        "length_ms": _get_player().length_ms,
-        "is_playing": _music_playing,
-        "is_paused": _music_paused,
-        "is_open": _get_player().is_open,
-    }
-
-
-def handle_music_seek(params):
-    """Seek to position"""
-    global _music_seek_pos, _music_seek_time
-    position = params.get("position_ms", 0)
-    _get_player().seek(position)
-    _music_seek_pos = int(position)
-    _music_seek_time = time.time()
-    return {"position_ms": _music_seek_pos}
-
-
-def handle_music_set_volume(params):
-    """Set volume (0-100)"""
-    volume = params.get("volume", 100)
-    _get_player().set_volume(int(volume))
-    return {"volume": volume}
 def handle_music_read_cover_file(params):
     """Read a cover image file and return base64 for preview"""
     filepath = params.get("filepath", "")
@@ -665,12 +528,6 @@ def handle_music_read_cover_file(params):
         return {"cover": base64.b64encode(data).decode("utf-8")}
     except Exception as e:
         return {"error": str(e), "cover": None}
-
-
-def handle_music_get_current_file(params):
-    '''Get the filepath currently loaded in the audio player'''
-    return {"filepath": getattr(_get_player(), "_current_file", None)}
-
 
 def handle_backup_clear_all(params):
     """Delete all backup files"""
@@ -704,7 +561,6 @@ def handle_config_set(params):
         _get_fm().set_language(params["language"], save=False)
     return {"success": True}
 
-
 METHODS = {
     # System Info
     "system.info": handle_system_info,
@@ -733,15 +589,8 @@ METHODS = {
     "music.extract_cover": handle_music_extract_cover,
     "music.apply_cover": handle_music_apply_cover,
     "music.remove_cover": handle_music_remove_cover,
-    "music.rename": handle_music_rename,
-    "music.play": handle_music_play,
-    "music.pause": handle_music_pause,
-    "music.stop": handle_music_stop,
-    "music.get_position": handle_music_get_position,
-    "music.seek": handle_music_seek,
-    "music.set_volume": handle_music_set_volume,
     "music.read_cover_file": handle_music_read_cover_file,
-    "music.get_current_file": handle_music_get_current_file,
+    "music.rename": handle_music_rename,
 
     # Backups
     "backup.list": handle_backup_list,
@@ -755,8 +604,6 @@ METHODS = {
     "config.get": handle_config_get,
     "config.set": handle_config_set,
 }
-
-
 
 def main():
     # Read language from config without importing heavy modules

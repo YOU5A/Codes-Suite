@@ -20,6 +20,9 @@ const api = {
     getAll: () => ipcRenderer.invoke("settings:getAll"),
   },
   python: {
+    // Convert local file path to playable URL via custom protocol
+    getFileUrl: (filepath) => 'file:///' + filepath.replace(/\\/g, '/'),
+
     call: (method, params) => ipcRenderer.invoke("python:call", method, params),
     status: () => ipcRenderer.invoke("python:status"),
   },

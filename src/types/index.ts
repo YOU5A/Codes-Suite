@@ -99,6 +99,7 @@ export interface ElectronAPI {
   python: {
     call: (method: string, params?: any) => Promise<any>;
     status: () => Promise<boolean>;
+    getFileUrl: (filepath: string) => string;
   };
   dialog: {
     openFolder: () => Promise<string | null>;

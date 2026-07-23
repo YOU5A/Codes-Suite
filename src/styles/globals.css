@@ -359,3 +359,19 @@ input[type="range"]::-webkit-slider-thumb:hover{transform:scale(1.15)}
     animation: none;
   }
 }
+
+/* Theme pill — white cursor-following glow (matches GlassButton) */
+.theme-pill {
+  position: relative;
+  overflow: hidden;
+  transition: all var(--transition-fast) ease;
+}
+.theme-pill-glow {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(240px circle at var(--pill-gx, 50%) var(--pill-gy, 50%), rgba(255,255,255,0.12), transparent 50%);
+  opacity: var(--pill-go, 0);
+  transition: opacity 0.4s ease-out;
+  border-radius: inherit;
+}

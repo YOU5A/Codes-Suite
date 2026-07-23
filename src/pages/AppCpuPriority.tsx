@@ -346,6 +346,7 @@ export default function AppCpuPriority(_props: Props) {
               value={formCpu}
               onChange={setFormCpu}
               options={Object.entries(tx.cpuOptions).map(([v, l]) => ({ value: v, label: l }))}
+              title={tx.cpuLabel}
             />
           </div>
 
@@ -364,6 +365,7 @@ export default function AppCpuPriority(_props: Props) {
                   value={formIo}
                   onChange={setFormIo}
                   options={Object.entries(tx.ioOptions).map(([v, l]) => ({ value: v, label: l }))}
+                  title={tx.ioLabel}
                 />
               </div>
             )}

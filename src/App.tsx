@@ -1,9 +1,10 @@
-import { useState, useEffect, lazy, Suspense } from "react";
+﻿import { useState, useEffect, lazy, Suspense } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useTheme, ThemeProvider } from "./hooks/useTheme";
 import { getAnimDuration, EASE_OUT } from "./utils/animations";
 import { ToastProvider } from "./contexts/ToastContext";
 import { ConfirmProvider } from "./contexts/ConfirmContext";
+import { MusicPlayerProvider } from "./contexts/MusicPlayerContext";
 import { LanguageProvider } from "./contexts/LanguageContext";
 import ToastContainer from "./components/Toast";
 import ConfirmDialog from "./components/ConfirmDialog";
@@ -11,6 +12,9 @@ import type { Page } from "./types";
 import TitleBar from "./components/TitleBar";
 import Sidebar from "./components/Sidebar";
 import { GlassLayout, GlassMain, pageTransition } from "./design-system";
+import FluidBackground from "./components/FluidBackground";
+import { loadFluidSettings, type FluidSettingsValues } from "./components/FluidSettingsPanel";
+import type { RGB } from "./utils/colorExtractor";
 
 // Lazy-loaded pages for code splitting
 const Dashboard = lazy(() => import("./pages/Dashboard"));
@@ -43,6 +47,8 @@ function AppContent() {
   });
   const [isMaximized, setIsMaximized] = useState(false);
   const animDuration = getAnimDuration(settings.animationSpeed);
+  const [fluidSettings, setFluidSettings] = useState<FluidSettingsValues>(() => loadFluidSettings());
+  const [coverColor, setCoverColor] = useState<RGB | null>(null);
 
   useEffect(() => {
     window.electronAPI?.window.onMaximizeChange(setIsMaximized);
@@ -54,6 +60,23 @@ function AppContent() {
     window.electronAPI?.window.setOpacity(settings.windowOpacity / 100);
   }, [settings.windowOpacity]);
 
+  // Listen for fluid settings changes from other components (same-tab sync)
+  useEffect(() => {
+    const handler = () => setFluidSettings(loadFluidSettings());
+    window.addEventListener("fluidSettingsChanged", handler);
+    return () => window.removeEventListener("fluidSettingsChanged", handler);
+  }, []);
+
+  // Listen for cover color changes from MusicManager
+  // (MusicManager handles localStorage persistence; App only consumes the event)
+  useEffect(() => {
+    const handler = (e: Event) => {
+      setCoverColor((e as CustomEvent<RGB | null>).detail);
+    };
+    window.addEventListener("fluidCoverColorChanged", handler as EventListener);
+    return () => window.removeEventListener("fluidCoverColorChanged", handler as EventListener);
+  }, []);
+
   // Save current page
   const handleNavigate = (page: Page) => {
     setCurrentPage(page);
@@ -64,13 +87,26 @@ function AppContent() {
     dashboard: <Dashboard onNavigate={handleNavigate} />,
     win32priority: <Win32Priority />,
     appcpupriority: <AppCpuPriority />,
-    musicmanager: <MusicManager />,
+    musicmanager: <MusicManager onNavigate={handleNavigate} fluidSettings={fluidSettings} onFluidSettingsChange={setFluidSettings} />,
     backupcenter: <BackupCenter />,
     settings: <Settings />,
   };
 
   return (
     <GlassLayout>
+      {/* Fluid background layer - covers entire window */}
+      <FluidBackground
+        enabled={fluidSettings.enabled}
+        preset={fluidSettings.style}
+        intensity={fluidSettings.intensity}
+        speedMultiplier={fluidSettings.speedMultiplier}
+        blurAmount={fluidSettings.blurAmount}
+        quality={fluidSettings.fps === 30 ? "low" : "high"}
+        targetFps={fluidSettings.fps}
+        colorMode={fluidSettings.colorMode}
+        coverColor={coverColor}
+        interactive={false}
+      />
       {/* Title Bar — sits above the body grid */}
       <div style={{ position: "relative", zIndex: 30, flexShrink: 0 }}>
         <TitleBar
@@ -132,7 +168,9 @@ export default function App() {
       <ToastProvider>
         <ConfirmProvider>
           <LanguageProvider>
-            <AppContent />
+            <MusicPlayerProvider>
+              <AppContent />
+            </MusicPlayerProvider>
           </LanguageProvider>
         </ConfirmProvider>
       </ToastProvider>
