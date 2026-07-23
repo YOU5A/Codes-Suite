@@ -110,9 +110,22 @@ def _ensure_dir(path):
     os.makedirs(path, exist_ok=True)
 
 
+def _stop_player():
+    """Stop the audio player and reset global state before file operations."""
+    global _music_playing, _music_paused, _music_seek_pos, _music_seek_time
+    try:
+        _get_player().stop()
+    except Exception:
+        pass
+    _music_playing = False
+    _music_paused = False
+    _music_seek_pos = 0
+    _music_seek_time = 0.0
+
+
 # ============================================================
 # RPC Method Handlers
-# ============================================================
+
 
 def handle_system_info(params):
     """Get system information"""
@@ -447,6 +460,7 @@ def handle_music_save_tags(params):
         return {"error": "Missing 'filepath' parameter"}
 
     try:
+        _stop_player()
         if os.path.isfile(filepath):
             os.chmod(filepath, stat.S_IWRITE)
         _get_fm().AudioFileProcessor.save_tags(
@@ -484,6 +498,7 @@ def handle_music_apply_cover(params):
         return {"error": "Missing parameters"}
 
     try:
+        _stop_player()
         if os.path.isfile(filepath):
             os.chmod(filepath, stat.S_IWRITE)
         with open(cover_path, "rb") as f:
@@ -500,6 +515,7 @@ def handle_music_remove_cover(params):
         return {"error": "Missing 'filepath' parameter"}
 
     try:
+        _stop_player()
         if os.path.isfile(filepath):
             os.chmod(filepath, stat.S_IWRITE)
         _get_fm().AudioFileProcessor.remove_cover(filepath)
@@ -534,6 +550,7 @@ def handle_music_rename(params):
         return {"error": "New name is same as current name"}
 
     try:
+        _stop_player()
         os.rename(filepath, new_path)
         return {"success": True, "new_path": new_path}
     except Exception as e:

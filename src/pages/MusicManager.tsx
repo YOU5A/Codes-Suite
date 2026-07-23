@@ -17,11 +17,11 @@ import {
 } from "@/design-system";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useToast } from "@/contexts/ToastContext";
+import { useConfirm } from "@/contexts/ConfirmContext";
 import type { MusicMetadata, PlaybackState, Page } from "@/types";
 import { useTheme } from "@/hooks/useTheme";
 import { getAnimDuration, EASE_OUT } from "@/utils/animations";
 
-import FluidBackground from "@/components/FluidBackground";
 import { extractDominantColorAsync, type RGB } from "@/utils/colorExtractor";
 import FluidSettingsPanel, { DEFAULT_FLUID_SETTINGS, loadFluidSettings, saveFluidSettings, type FluidSettingsValues } from "@/components/FluidSettingsPanel";
 
@@ -57,6 +57,12 @@ const t = {
     renameFailed: "重命名失败",
     nowPlaying: "正在播放",
     noMusic: "未选择曲目",
+    saveTagsConfirm: "确定要保存标签到所选文件吗？",
+    applyAllConfirm: "确定要将当前标签应用到所有文件吗？此操作不可撤销。",
+    applyCoverConfirm: "确定要应用封面到所选文件吗？",
+    removeCoverConfirm: "确定要删除所选文件的封面吗？",
+    renameOneConfirm: "确定要重命名所选文件吗？",
+    renameAllConfirm: "确定要按“标题 - 艺术家”格式重命名所有文件吗？",
   },
   en: {
     title: "Music Manager",
@@ -89,13 +95,20 @@ const t = {
     renameFailed: "Rename failed",
     nowPlaying: "Now Playing",
     noMusic: "No track selected",
+    saveTagsConfirm: "Save tags to the selected file?",
+    applyAllConfirm: "Apply current tags to all files? This cannot be undone.",
+    applyCoverConfirm: "Apply cover artwork to the selected file?",
+    removeCoverConfirm: "Remove cover artwork from the selected file?",
+    renameOneConfirm: "Rename the selected file?",
+    renameAllConfirm: "Rename all files using “Title - Artist” format?",
   },
 };
 
-export default function MusicManager({ onNavigate }: { onNavigate?: (page: Page) => void }) {
+export default function MusicManager({ onNavigate, fluidSettings: externalSettings, onFluidSettingsChange }: { onNavigate?: (page: Page) => void; fluidSettings?: FluidSettingsValues; onFluidSettingsChange?: (s: FluidSettingsValues) => void }) {
   const { lang } = useLanguage();
   const tx = t[lang];
   const { showToast } = useToast();
+  const { confirm } = useConfirm();
 
   const [folder, setFolder] = useState("");
   const [files, setFiles] = useState<string[]>([]);
@@ -110,6 +123,7 @@ export default function MusicManager({ onNavigate }: { onNavigate?: (page: Page)
   const [tagArtist, setTagArtist] = useState("");
   const [tagAlbum, setTagAlbum] = useState("");
   const [tagYear, setTagYear] = useState("");
+  const [tagGenre, setTagGenre] = useState("");
   const [renameName, setRenameName] = useState("");
 
   const [playback, setPlayback] = useState<PlaybackState>({
@@ -122,23 +136,29 @@ export default function MusicManager({ onNavigate }: { onNavigate?: (page: Page)
   const hasScanned = useRef(false);
   const [isDragging, setIsDragging] = useState(false);
   const [fluidSettingsOpen, setFluidSettingsOpen] = useState(false);
-  const [fluidSettings, setFluidSettings] = useState<FluidSettingsValues>(() => loadFluidSettings());
+  const [fluidSettings, setFluidSettings] = useState<FluidSettingsValues>(() => externalSettings ?? loadFluidSettings());
   const [coverColor, setCoverColor] = useState<RGB | null>(null);
   // ?????????
   useEffect(() => {
     saveFluidSettings(fluidSettings);
   }, [fluidSettings]);
 
-  // ????????
+  // Extract cover color and notify app
   useEffect(() => {
     let cancelled = false;
     if (coverB64) {
       const dataUrl = `data:image/jpeg;base64,${coverB64}`;
       extractDominantColorAsync(dataUrl).then((color) => {
-        if (!cancelled) setCoverColor(color);
+        if (!cancelled) {
+          setCoverColor(color);
+          localStorage.setItem("fluidCoverColor", JSON.stringify(color));
+          window.dispatchEvent(new CustomEvent("fluidCoverColorChanged", { detail: color }));
+        }
       });
     } else {
       setCoverColor(null);
+      localStorage.removeItem("fluidCoverColor");
+      window.dispatchEvent(new CustomEvent("fluidCoverColorChanged", { detail: null }));
     }
     return () => { cancelled = true; };
   }, [coverB64]);
@@ -210,7 +230,7 @@ export default function MusicManager({ onNavigate }: { onNavigate?: (page: Page)
     if (m && !m.error) {
       setMetadata(m);
       setTagTitle(m.title ?? ""); setTagArtist(m.artist ?? "");
-      setTagAlbum(m.album ?? ""); setTagYear(m.year ?? "");
+      setTagAlbum(m.album ?? ""); setTagYear(m.year ?? ""); setTagGenre(m.genre ?? "");
     }
     const c = await window.electronAPI?.python.call("music.extract_cover", { filepath: fp });
     setCoverB64(c?.cover ?? null);
@@ -324,18 +344,23 @@ export default function MusicManager({ onNavigate }: { onNavigate?: (page: Page)
   // ── Tags ──
   const saveTags = async () => {
     if (!selectedFile) { showToast(tx.noFileSelected, "warning"); return; }
+    const ok = await confirm({ title: tx.saveTagsConfirm });
+    if (!ok) return;
     setSaving(true);
     const r = await window.electronAPI?.python.call("music.save_tags", {
-      filepath: selectedFile, title: tagTitle, artist: tagArtist, album: tagAlbum, year: tagYear,
+      filepath: selectedFile, title: tagTitle, artist: tagArtist, album: tagAlbum, year: tagYear, genre: tagGenre,
     });
     setSaving(false);
     showToast(r?.success ? tx.tagsSaved : (r?.error ?? "Failed"), r?.success ? "success" : "error");
     if (r?.success) selectFile(selectedFile);
   };
   const applyAll = async () => {
+    if (files.length === 0) return;
+    const ok = await confirm({ title: tx.applyAllConfirm, danger: true });
+    if (!ok) return;
     setSaving(true);
     for (const fp of files)
-      await window.electronAPI?.python.call("music.save_tags", { filepath: fp, title: tagTitle, artist: tagArtist, album: tagAlbum, year: tagYear });
+      await window.electronAPI?.python.call("music.save_tags", { filepath: fp, title: tagTitle, artist: tagArtist, album: tagAlbum, year: tagYear, genre: tagGenre });
     setSaving(false);
     showToast(tx.tagsSaved, "success");
   };
@@ -351,12 +376,16 @@ export default function MusicManager({ onNavigate }: { onNavigate?: (page: Page)
   };
   const applyCover = async () => {
     if (!selectedFile || !newCoverPath) return;
+    const ok = await confirm({ title: tx.applyCoverConfirm });
+    if (!ok) return;
     const r = await window.electronAPI?.python.call("music.apply_cover", { filepath: selectedFile, cover_path: newCoverPath });
     showToast(r?.success ? tx.coverApplied : (r?.error ?? ""), r?.success ? "success" : "error");
     if (r?.success) selectFile(selectedFile);
   };
   const removeCover = async () => {
     if (!selectedFile) return;
+    const ok = await confirm({ title: tx.removeCoverConfirm, danger: true });
+    if (!ok) return;
     const r = await window.electronAPI?.python.call("music.remove_cover", { filepath: selectedFile });
     showToast(r?.success ? tx.coverRemoved : (r?.error ?? ""), r?.success ? "success" : "error");
     if (r?.success) selectFile(selectedFile);
@@ -366,11 +395,15 @@ export default function MusicManager({ onNavigate }: { onNavigate?: (page: Page)
   const renameOne = async () => {
     if (!selectedFile) { showToast(tx.noFileSelected, "warning"); return; }
     if (!renameName.trim()) { showToast(lang === "zh" ? "?????????" : "Enter a file name", "warning"); return; }
+    const ok = await confirm({ title: tx.renameOneConfirm });
+    if (!ok) return;
     const r = await window.electronAPI?.python.call("music.rename", { filepath: selectedFile, new_name: renameName.trim() });
     if (r?.success) { showToast(tx.renameSuccess, "success"); setSelectedFile(r.new_path); doScan(); }
     else showToast(r?.error ?? tx.renameFailed, "error");
   };
   const renameAll = async () => {
+    const ok = await confirm({ title: tx.renameAllConfirm });
+    if (!ok) return;
     let c = 0;
     for (const fp of files) {
       try {
@@ -387,23 +420,11 @@ export default function MusicManager({ onNavigate }: { onNavigate?: (page: Page)
 
   // ── Toolbar actions ──
   const clearTagFields = () => {
-    setTagTitle(""); setTagArtist(""); setTagAlbum(""); setTagYear("");
+    setTagTitle(""); setTagArtist(""); setTagAlbum(""); setTagYear(""); setTagGenre("");
   };
 
   return (
     <>
-      <FluidBackground
-        interactive={false}
-        enabled={fluidSettings.enabled}
-        preset={fluidSettings.style}
-        intensity={fluidSettings.intensity}
-        speedMultiplier={fluidSettings.speedMultiplier}
-        blurAmount={fluidSettings.blurAmount}
-        quality={fluidSettings.fps === 30 ? "low" : "high"}
-        targetFps={fluidSettings.fps}
-        colorMode={fluidSettings.colorMode}
-        coverColor={coverColor}
-      />
     <motion.div
       animate={{ opacity: 1 }}
       transition={{ duration: animationDuration, ease: EASE_OUT }}
@@ -512,6 +533,8 @@ export default function MusicManager({ onNavigate }: { onNavigate?: (page: Page)
                     style={{ fontSize: fontSizes.sm, padding: space[1] + "px " + space[2] + "px" }} />
                   <GlassInput value={tagYear} onChange={e => setTagYear(e.target.value)} placeholder={tx.year}
                     style={{ fontSize: fontSizes.sm, padding: space[1] + "px " + space[2] + "px" }} />
+                  <GlassInput value={tagGenre} onChange={e => setTagGenre(e.target.value)} placeholder={tx.genre}
+                    style={{ fontSize: fontSizes.sm, padding: space[1] + "px " + space[2] + "px" }} />
                 </div>
 
                 <div style={{ display: "flex", gap: space[2], marginTop: space[3] }}>
@@ -531,6 +554,7 @@ export default function MusicManager({ onNavigate }: { onNavigate?: (page: Page)
                   <GlassInput
                     value={renameName}
                     onChange={e => setRenameName(e.target.value)}
+                    placeholder={renameName || (lang === "zh" ? "文件名" : "File name")}
                     style={{ flex: 1, fontSize: fontSizes.sm, padding: space[1] + "px " + space[2] + "px" }}
                   />
                   <GlassButton variant="secondary" onClick={renameOne} size="sm">
