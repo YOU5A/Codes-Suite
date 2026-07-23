@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import {
-  FolderOpen, Search, Save, Image, X, Play, Pause, Square,
+  FolderOpen, Search, Save, Image, X, Play, Pause, Square, Settings,
   Volume2, Trash2, Music, Edit3
 } from "lucide-react";
 import {
@@ -17,9 +17,13 @@ import {
 } from "@/design-system";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useToast } from "@/contexts/ToastContext";
-import type { MusicMetadata, PlaybackState } from "@/types";
+import type { MusicMetadata, PlaybackState, Page } from "@/types";
 import { useTheme } from "@/hooks/useTheme";
 import { getAnimDuration, EASE_OUT } from "@/utils/animations";
+
+import FluidBackground from "@/components/FluidBackground";
+import { extractDominantColorAsync, type RGB } from "@/utils/colorExtractor";
+import FluidSettingsPanel, { DEFAULT_FLUID_SETTINGS, loadFluidSettings, saveFluidSettings, type FluidSettingsValues } from "@/components/FluidSettingsPanel";
 
 const t = {
   zh: {
@@ -49,6 +53,7 @@ const t = {
     coverApplied: "封面已应用",
     coverRemoved: "封面已删除",
     renameSuccess: "重命名成功",
+    settings: "设置",
     renameFailed: "重命名失败",
     nowPlaying: "正在播放",
     noMusic: "未选择曲目",
@@ -80,13 +85,14 @@ const t = {
     coverApplied: "Cover applied",
     coverRemoved: "Cover removed",
     renameSuccess: "Renamed successfully",
+    settings: "Settings",
     renameFailed: "Rename failed",
     nowPlaying: "Now Playing",
     noMusic: "No track selected",
   },
 };
 
-export default function MusicManager() {
+export default function MusicManager({ onNavigate }: { onNavigate?: (page: Page) => void }) {
   const { lang } = useLanguage();
   const tx = t[lang];
   const { showToast } = useToast();
@@ -115,6 +121,28 @@ export default function MusicManager() {
   const progressRef = useRef<HTMLDivElement | null>(null);
   const hasScanned = useRef(false);
   const [isDragging, setIsDragging] = useState(false);
+  const [fluidSettingsOpen, setFluidSettingsOpen] = useState(false);
+  const [fluidSettings, setFluidSettings] = useState<FluidSettingsValues>(() => loadFluidSettings());
+  const [coverColor, setCoverColor] = useState<RGB | null>(null);
+  // ?????????
+  useEffect(() => {
+    saveFluidSettings(fluidSettings);
+  }, [fluidSettings]);
+
+  // ????????
+  useEffect(() => {
+    let cancelled = false;
+    if (coverB64) {
+      const dataUrl = `data:image/jpeg;base64,${coverB64}`;
+      extractDominantColorAsync(dataUrl).then((color) => {
+        if (!cancelled) setCoverColor(color);
+      });
+    } else {
+      setCoverColor(null);
+    }
+    return () => { cancelled = true; };
+  }, [coverB64]);
+
 
   // Mount: restore folder, check playback, load volume
   useEffect(() => {
@@ -363,6 +391,19 @@ export default function MusicManager() {
   };
 
   return (
+    <>
+      <FluidBackground
+        interactive={false}
+        enabled={fluidSettings.enabled}
+        preset={fluidSettings.style}
+        intensity={fluidSettings.intensity}
+        speedMultiplier={fluidSettings.speedMultiplier}
+        blurAmount={fluidSettings.blurAmount}
+        quality={fluidSettings.fps === 30 ? "low" : "high"}
+        targetFps={fluidSettings.fps}
+        colorMode={fluidSettings.colorMode}
+        coverColor={coverColor}
+      />
     <motion.div
       animate={{ opacity: 1 }}
       transition={{ duration: animationDuration, ease: EASE_OUT }}
@@ -377,12 +418,17 @@ export default function MusicManager() {
           <GlassBadge variant="accent" size="sm">{files.length} {lang === "zh" ? "\u6587\u4ef6" : "files"}</GlassBadge>
         )}
         <div style={{ flex: 1 }} />
-        <GlassButton variant="primary" onClick={browse} size="md">
-          <FolderOpen size={14} /> {tx.browse}
-        </GlassButton>
-        <GlassButton variant="secondary" onClick={() => doScan()} size="md">
-          <Search size={14} /> {tx.scan}
-        </GlassButton>
+        <div style={{ display: "flex", gap: space[2], marginRight: space[4] }}>
+          <GlassButton variant="primary" onClick={browse} size="md">
+            <FolderOpen size={14} /> {tx.browse}
+          </GlassButton>
+          <GlassButton variant="secondary" onClick={() => doScan()} size="md">
+            <Search size={14} /> {tx.scan}
+          </GlassButton>
+          <GlassButton variant="secondary" onClick={() => setFluidSettingsOpen(true)} size="md">
+            <Settings size={14} /> {tx.settings}
+          </GlassButton>
+        </div>
       </div>
 
       {/* Empty State */}
@@ -647,5 +693,13 @@ export default function MusicManager() {
         </div>
       </GlassSurface>
     </motion.div>
+
+      <FluidSettingsPanel
+        open={fluidSettingsOpen}
+        onClose={() => setFluidSettingsOpen(false)}
+        values={fluidSettings}
+        onChange={setFluidSettings}
+      />
+    </>
   );
 }
