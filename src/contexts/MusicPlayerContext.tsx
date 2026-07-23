@@ -42,6 +42,7 @@ export function MusicPlayerProvider({ children }: { children: React.ReactNode })
     pos: 0,
   });
   const [playingFile, setPlayingFile] = useState("");
+  const isStoppingRef = useRef(false);
   const [volume, setVolumeState] = useState(() => {
     try {
       const saved = localStorage.getItem("music_volume");
@@ -67,6 +68,11 @@ export function MusicPlayerProvider({ children }: { children: React.ReactNode })
     const onPause = () => setAudioState(prev => ({ ...prev, playing: false }));
     const onEnd = () => setAudioState(prev => ({ ...prev, playing: false, pos: 0 }));
     const onErr = () => {
+      if (isStoppingRef.current) {
+        isStoppingRef.current = false;
+        setAudioState({ duration: 0, playing: false, pos: 0 });
+        return;
+      }
       console.error("[Audio]", audio.error?.message);
       setAudioState({ duration: 0, playing: false, pos: 0 });
     };
@@ -125,6 +131,7 @@ export function MusicPlayerProvider({ children }: { children: React.ReactNode })
   const stop = useCallback(() => {
     const audio = audioRef.current;
     if (!audio) return;
+    isStoppingRef.current = true;
     audio.pause();
     audio.currentTime = 0;
     audio.src = "";

@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, dialog, shell, Tray, Menu, nativeTheme } = require("electron");
+﻿const { app, BrowserWindow, ipcMain, dialog, shell, Tray, Menu, nativeTheme } = require("electron");
 const fs = require("fs");
 const path = require("path");
 const { execSync, spawnSync } = require("child_process");
@@ -10,6 +10,9 @@ let tray = null;
 let isQuitting = false;
 
 const isDev = !app.isPackaged;
+
+// 禁用 Electron 安全警告（webSecurity / allowRunningInsecureContent / CSP）
+process.env['ELECTRON_DISABLE_SECURITY_WARNINGS'] = 'true';
 
 // Fix GPU cache permission errors by setting a custom cache path
 app.setPath("userData", path.join(app.getPath("appData"), "CodesSuite"));
