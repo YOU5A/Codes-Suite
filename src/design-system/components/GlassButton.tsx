@@ -33,11 +33,11 @@ const sizeStyles: Record<ButtonSize, React.CSSProperties> = {
 function variantBase(variant: ButtonVariant): React.CSSProperties {
   switch (variant) {
     case "primary":
-      return { background: "var(--accent)", color: "white", border: "none", fontWeight: 500, boxShadow: "0 2px 10px rgba(var(--accent-rgb), 0.2)" };
+      return { background: "rgba(var(--accent-rgb), 0.25)", color: "color-mix(in srgb, var(--accent) 40%, white)", border: "1px solid rgba(var(--accent-rgb), 0.35)", fontWeight: 500, backdropFilter: "blur(12px) saturate(1.4)", WebkitBackdropFilter: "blur(12px) saturate(1.4)" };
     case "secondary":
       return { background: "var(--bg-secondary)", color: "var(--text-primary)", border: "1.5px solid var(--border-color)", fontWeight: 500, backdropFilter: "blur(15px)", WebkitBackdropFilter: "blur(15px)" };
     case "danger":
-      return { background: "var(--danger)", color: "white", border: "none", fontWeight: 500, boxShadow: "0 2px 10px rgba(231,76,60,0.25)" };
+      return { background: "rgba(var(--danger-rgb), 0.25)", color: "color-mix(in srgb, var(--danger) 40%, white)", border: "1px solid rgba(var(--danger-rgb), 0.35)", fontWeight: 500, backdropFilter: "blur(12px) saturate(1.4)", WebkitBackdropFilter: "blur(12px) saturate(1.4)" };
     case "ghost":
       return { background: "transparent", color: "var(--text-secondary)", border: "none", backdropFilter: "none", WebkitBackdropFilter: "none" };
     case "input":
@@ -48,9 +48,9 @@ function variantBase(variant: ButtonVariant): React.CSSProperties {
 
 function hoverTarget(variant: ButtonVariant): TargetAndTransition | undefined {
   switch (variant) {
-    case "primary": return { background: "var(--accent-hover)", boxShadow: "0 0 18px rgba(var(--accent-rgb), 0.4)" };
+    case "primary": return { background: "rgba(var(--accent-rgb), 0.4)", borderColor: "rgba(var(--accent-rgb), 0.55)", boxShadow: "0 0 24px rgba(var(--accent-rgb), 0.4), 0 0 8px rgba(var(--accent-rgb), 0.25)" };
     case "secondary": return { background: "var(--bg-elevated)", borderColor: "var(--accent)", boxShadow: "0 0 14px rgba(var(--accent-rgb), 0.15)" };
-    case "danger": return { filter: "brightness(1.15)", boxShadow: "0 0 18px rgba(231,76,60,0.4)" };
+    case "danger": return { background: "rgba(var(--danger-rgb), 0.4)", borderColor: "rgba(var(--danger-rgb), 0.55)", boxShadow: "0 0 24px rgba(var(--danger-rgb), 0.4), 0 0 8px rgba(var(--danger-rgb), 0.25)" };
     case "ghost": return { background: "var(--bg-tertiary)", color: "var(--text-primary)", borderRadius: 20 };
     case "input": return { borderColor: "var(--accent)", boxShadow: "0 0 0 3px var(--accent-bg)" };
     default: return undefined;
@@ -63,8 +63,8 @@ function disabledStyle(): React.CSSProperties {
 
 /* ─── Button Glow ─── */
 
-const GLOW_COLOR = "rgba(255,255,255,0.10)";
-const GLOW_RADIUS = 240;
+const GLOW_COLOR = "rgba(255,255,255,0.18)";
+const GLOW_RADIUS = 280;
 
 function updateBtnGlow(el: HTMLElement, cx: number, cy: number) {
   const r = el.getBoundingClientRect();

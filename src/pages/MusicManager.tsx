@@ -1,7 +1,8 @@
 ﻿import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import {
-  FolderOpen, Search, Save, Image, X, Play, Pause, Square, Settings,
+  FolderOpen, Search, Save, Image, X, Play, Pause, Settings,
+  SkipBack, SkipForward,
   Volume2, Trash2, Music, Edit3
 } from "lucide-react";
 import {
@@ -126,11 +127,16 @@ export default function MusicManager({ onNavigate, fluidSettings: externalSettin
   const [tagGenre, setTagGenre] = useState("");
   const [renameName, setRenameName] = useState("");
 
-  const { audioState, playingFile, volume, playFile: contextPlayFile, toggle: contextToggle, stop: contextStop, seek: contextSeek, setVolume, fmtTime } = useMusicPlayer();
+  const { audioState, playingFile, volume, playFile: contextPlayFile, toggle: contextToggle, seek: contextSeek, setVolume, fmtTime } = useMusicPlayer();
   const [saving, setSaving] = useState(false);
   const progressRef = useRef<HTMLDivElement | null>(null);
+  const listRef = useRef<HTMLDivElement | null>(null);
   const hasScanned = useRef(false);
   const [isDragging, setIsDragging] = useState(false);
+  const [progressHover, setProgressHover] = useState(false);
+  const [playBtnGlow, setPlayBtnGlow] = useState({ x: 0.5, y: 0.5, visible: false });
+  const [volumeHover, setVolumeHover] = useState(false);
+  const [volGlow, setVolGlow] = useState({ x: 0.5, y: 0.5, visible: false });
   const [fluidSettingsOpen, setFluidSettingsOpen] = useState(false);
   const [fluidSettings, setFluidSettings] = useState<FluidSettingsValues>(() => externalSettings ?? loadFluidSettings());
   const [coverColor, setCoverColor] = useState<RGB | null>(null);
@@ -194,6 +200,22 @@ export default function MusicManager({ onNavigate, fluidSettings: externalSettin
     };
     init();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Scroll selected file into center of list
+  useEffect(() => {
+    if (!selectedFile || !listRef.current) return;
+    const el = listRef.current.querySelector(`[data-filepath="${CSS.escape(selectedFile)}"]`) as HTMLElement | null;
+    if (el && listRef.current) {
+      const container = listRef.current;
+      const elTop = el.offsetTop;
+      const elHeight = el.offsetHeight;
+      const containerHeight = container.clientHeight;
+      container.scrollTo({
+        top: elTop - containerHeight / 2 + elHeight / 2,
+        behavior: "smooth",
+      });
+    }
+  }, [selectedFile]);
 
   // ── File ──
 
@@ -275,8 +297,20 @@ export default function MusicManager({ onNavigate, fluidSettings: externalSettin
     contextToggle(selectedFile);
   };
 
-  const stop = () => {
-    contextStop();
+  const playPrev = () => {
+    if (files.length === 0) return;
+    const currentFile = playingFile || selectedFile;
+    const idx = files.indexOf(currentFile);
+    const prev = idx > 0 ? files[idx - 1] : files[files.length - 1];
+    playFile(prev);
+  };
+
+  const playNext = () => {
+    if (files.length === 0) return;
+    const currentFile = playingFile || selectedFile;
+    const idx = files.indexOf(currentFile);
+    const next = idx < files.length - 1 ? files[idx + 1] : files[0];
+    playFile(next);
   };
 
   const doSeek = (clientX: number) => {
@@ -287,10 +321,6 @@ export default function MusicManager({ onNavigate, fluidSettings: externalSettin
     e.preventDefault();
     setIsDragging(true);
     doSeek(e.clientX);
-  };
-
-  const changeVol = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setVolume(parseInt(e.target.value));
   };
 
   const playback = {
@@ -530,6 +560,7 @@ export default function MusicManager({ onNavigate, fluidSettings: externalSettin
               {/* File List */}
               <GlassCard style={{ flex: 1, minHeight: 0, padding: 0, overflow: "hidden", display: "flex", flexDirection: "column" }}>
                 <div
+                  ref={listRef}
                   className="music-file-list-scroll scroll-fade-edge"
                   style={{
                     flex: 1, overflowY: "auto", overflowX: "hidden",
@@ -542,8 +573,19 @@ export default function MusicManager({ onNavigate, fluidSettings: externalSettin
                     return (
                       <div
                         key={fp}
-                        onClick={() => { selectFile(fp); }}
+                        data-filepath={fp}
+                        onClick={() => { setSelectedFile(fp); }}
                         onDoubleClick={() => { playFile(fp); }}
+                        onMouseMove={(e) => {
+                          const el = e.currentTarget;
+                          const r = el.getBoundingClientRect();
+                          el.style.setProperty("--gx", `${((e.clientX - r.left) / r.width) * 100}%`);
+                          el.style.setProperty("--gy", `${((e.clientY - r.top) / r.height) * 100}%`);
+                          el.style.setProperty("--go", "1");
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.setProperty("--go", "0");
+                        }}
                         style={{
                           padding: space[2] + "px " + space[4] + "px",
                           cursor: "pointer",
@@ -552,12 +594,20 @@ export default function MusicManager({ onNavigate, fluidSettings: externalSettin
                           background: active ? "var(--accent-bg)" : "transparent",
                           borderLeft: active ? "3px solid var(--accent)" : "3px solid transparent",
                           display: "flex", alignItems: "center", gap: space[2],
+                          position: "relative", overflow: "hidden",
                           transition: "background var(--transition-fast)",
                         }}
                       >
-                        <Music size={12} />
+                        <span style={{
+                          position: "absolute", inset: 0, pointerEvents: "none",
+                          background: "radial-gradient(circle at var(--gx, 50%) var(--gy, 50%), rgba(var(--accent-rgb, 99,102,241), 0.15) 0%, transparent 60%)",
+                          opacity: "var(--go, 0)",
+                          transition: "opacity 0.25s ease",
+                        }} />
+                        <Music size={12} style={{ position: "relative", zIndex: 1 }} />
                         <span style={{
                           flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+                          position: "relative", zIndex: 1,
                         }}>
                           {name}
                         </span>
@@ -571,108 +621,220 @@ export default function MusicManager({ onNavigate, fluidSettings: externalSettin
         </>
       )}
 
-      {/* Player Bar */}
+      {/* Player Bar ? Apple Music style */}
       <GlassSurface
-        tier="regular"
+        tier="elevated"
         style={{
           flexShrink: 0,
-          padding: space[4] + "px " + space[6] + "px",
+          padding: `${space[3]}px ${space[5]}px ${space[4]}px`,
           display: "flex",
           flexDirection: "column",
-          gap: space[3],
+          gap: space[2],
         }}
       >
-        {/* Info Row */}
-        <div style={{
-          display: "flex", justifyContent: "space-between", alignItems: "center",
-        }}>
-          <span style={{
-            fontSize: fontSizes.sm, fontWeight: 500, color: "var(--text-primary)",
-            maxWidth: "65%", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
-          }}>
-            {playback.is_playing || playback.is_paused
-              ? (playingFile ? playingFile.split("\\").pop() : tx.nowPlaying)
-              : tx.noMusic}
-          </span>
-          <span style={{
-            fontSize: fontSizes.xs, color: "var(--text-tertiary)",
-            fontVariantNumeric: "tabular-nums",
-          }}>
-            {fmtTime(playback.position_ms)} / {fmtTime(playback.length_ms)}
-          </span>
-        </div>
-
-        {/* Progress Bar */}
+        {/* Progress Bar ? slim, expands on hover */}
         <div
           ref={progressRef}
           onMouseDown={handleProgressMouseDown}
+          onMouseEnter={() => setProgressHover(true)}
+          onMouseLeave={() => setProgressHover(false)}
           style={{
-            width: "100%", height: 6, borderRadius: 3,
-            background: "rgba(128,128,128,0.25)",
+            width: "100%", height: progressHover || isDragging ? 6 : 4, borderRadius: 3,
+            background: "rgba(128,128,128,0.18)",
             cursor: "pointer", position: "relative",
+            transition: "height 0.2s ease",
           }}
         >
           <div style={{
             position: "absolute", top: 0, left: 0, height: "100%", borderRadius: 3,
             width: `${pct}%`,
             background: "var(--accent)",
-            transition: "width 0.2s linear",
-            boxShadow: "0 0 8px rgba(var(--accent-rgb, 99,102,241), 0.4)",
+            transition: isDragging ? "none" : "width 0.15s linear",
           }} />
           <div style={{
             position: "absolute", top: "50%", left: `${pct}%`,
-            width: 12, height: 12, borderRadius: "50%",
-            background: "#fff",
-            boxShadow: "0 1px 6px rgba(0,0,0,0.3)",
+            width: progressHover || isDragging ? 12 : 0, height: progressHover || isDragging ? 12 : 0,
+            borderRadius: "50%",
+            background: "var(--accent)",
+            boxShadow: "0 1px 4px rgba(0,0,0,0.25)",
             transform: "translate(-50%, -50%)",
-            transition: "left 0.2s linear",
+            transition: isDragging ? "none" : "width 0.15s ease, height 0.15s ease, left 0.15s linear",
             pointerEvents: "none",
           }} />
         </div>
 
-        {/* Controls Row */}
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 20 }}>
-          <GlassButton variant="ghost" size="sm" onClick={stop} noAnimation
-            style={{ padding: 4 }}>
-            <Square size={16} fill="currentColor" />
-          </GlassButton>
-
-          <motion.button
-            whileTap={{ scale: 0.93 }}
-            whileHover={{ scale: 1.06 }}
-            transition={{ type: "tween", duration: 0.15, ease: EASE_OUT }}
-            onClick={toggle}
-            style={{
-              background: "var(--accent)", border: "none", borderRadius: "50%",
-              width: 44, height: 44, display: "flex", alignItems: "center", justifyContent: "center",
-              cursor: "pointer", color: "#fff",
-              boxShadow: "0 4px 16px rgba(var(--accent-rgb, 99,102,241), 0.35)",
-            }}
-          >
-            {playback.is_playing
-              ? <Pause size={18} fill="#fff" />
-              : <Play size={18} fill="#fff" style={{ marginLeft: 2 }} />
-            }
-          </motion.button>
-
-          {/* Volume */}
-          <div style={{ display: "flex", alignItems: "center", gap: space[2], marginLeft: 8 }}>
-            <Volume2 size={14} style={{ color: "var(--text-tertiary)" }} />
-            <input
-              type="range"
-              min={0} max={100} value={volume}
-              onChange={changeVol}
-              style={{
-                width: 80, height: 8,
-                userSelect: "auto", accentColor: "var(--accent)", cursor: "pointer",
-              }}
-            />
-            <span style={{
-              fontSize: 10, color: "var(--text-tertiary)",
-              minWidth: 28, textAlign: "right",
-              fontVariantNumeric: "tabular-nums",
+        {/* Main Row: Cover+Info | Controls | Volume+Time */}
+        <div style={{
+          display: "flex", alignItems: "center", gap: space[4],
+        }}>
+          {/* Left: Cover + Track Info */}
+          <div style={{
+            display: "flex", alignItems: "center", gap: space[3],
+            flex: "0 1 260px", minWidth: 0,
+          }}>
+            {/* Cover Thumbnail */}
+            <div style={{
+              width: 48, height: 48, borderRadius: radii.md,
+              overflow: "hidden", flexShrink: 0,
+              background: "rgba(128,128,128,0.15)",
+              display: "flex", alignItems: "center", justifyContent: "center",
             }}>
-              {volume}%
+              {coverB64 ? (
+                <img
+                  src={`data:image/jpeg;base64,${coverB64}`}
+                  alt="cover"
+                  style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                />
+              ) : (
+                <Music size={20} style={{ color: "var(--text-tertiary)", opacity: 0.5 }} />
+              )}
+            </div>
+            {/* Track Info */}
+            <div style={{
+              minWidth: 0, display: "flex", flexDirection: "column", gap: 2,
+            }}>
+              <span style={{
+                fontSize: fontSizes.sm, fontWeight: 600, color: "var(--text-primary)",
+                overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+              }}>
+                {(playback.is_playing || playback.is_paused)
+                  ? (metadata?.title || (playingFile ? playingFile.split("\\").pop() : tx.nowPlaying))
+                  : tx.noMusic}
+              </span>
+              <span style={{
+                fontSize: fontSizes.xs, color: "var(--text-tertiary)",
+                overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+              }}>
+                {metadata?.artist || (lang === "zh" ? "\u672a\u77e5\u827a\u672f\u5bb6" : "Unknown Artist")}
+              </span>
+            </div>
+          </div>
+
+          {/* Center: Playback Controls */}
+          <div style={{
+            display: "flex", alignItems: "center", justifyContent: "center", gap: space[4],
+            flex: 1,
+          }}>
+            {/* Prev */}
+            <span style={{ width: 34, height: 34, display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+              <button
+                onClick={playPrev}
+                className="ctrl-btn"
+                style={{
+                  background: "transparent",
+                  border: "none",
+                  borderRadius: "50%",
+                  width: 34, height: 34, display: "flex", alignItems: "center", justifyContent: "center",
+                  cursor: "pointer", color: "var(--text-tertiary)",
+                  transition: "color 0.2s ease, opacity 0.15s ease",
+                }}
+              >
+                <SkipBack size={16} fill="currentColor" />
+              </button>
+            </span>
+
+            {/* Play/Pause */}
+            <span style={{ width: 34, height: 34, display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+              <motion.button
+                whileTap={{ scale: 0.95 }}
+                whileHover={{ scale: 1.1 }}
+                transition={{ type: "spring", stiffness: 400, damping: 17 }}
+                onClick={toggle}
+                onMouseMove={(e) => {
+                  const r = e.currentTarget.getBoundingClientRect();
+                  setPlayBtnGlow({
+                    x: (e.clientX - r.left) / r.width,
+                    y: (e.clientY - r.top) / r.height,
+                    visible: true,
+                  });
+                }}
+                onMouseLeave={() => setPlayBtnGlow(prev => ({ ...prev, visible: false }))}
+                style={{
+                  background: "rgba(255,255,255,0.08)",
+                  backdropFilter: "blur(12px) saturate(1.4)",
+                  WebkitBackdropFilter: "blur(12px) saturate(1.4)",
+                  border: "1px solid rgba(255,255,255,0.12)",
+                  borderRadius: "50%",
+                  width: 34, height: 34, display: "flex", alignItems: "center", justifyContent: "center",
+                  cursor: "pointer", color: "var(--text-primary)",
+                  position: "relative", overflow: "hidden",
+                }}
+              >
+                <span style={{
+                    position: "absolute", inset: 0, borderRadius: "50%", pointerEvents: "none",
+                    background: `radial-gradient(circle at ${playBtnGlow.x * 100}% ${playBtnGlow.y * 100}%, rgba(255,255,255,0.18) 0%, transparent 60%)`,
+                    opacity: playBtnGlow.visible ? 1 : 0,
+                    transition: "opacity 0.25s ease",
+                  }} />
+                {playback.is_playing
+                  ? <Pause size={14} fill="currentColor" style={{ position: "relative", zIndex: 1 }} />
+                  : <Play size={14} fill="currentColor" style={{ position: "relative", zIndex: 1, marginLeft: 2 }} />
+                }
+              </motion.button>
+            </span>
+
+            {/* Next */}
+            <span style={{ width: 34, height: 34, display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+              <button
+                onClick={playNext}
+                className="ctrl-btn"
+                style={{
+                  background: "transparent",
+                  border: "none",
+                  borderRadius: "50%",
+                  width: 34, height: 34, display: "flex", alignItems: "center", justifyContent: "center",
+                  cursor: "pointer", color: "var(--text-tertiary)",
+                  transition: "color 0.2s ease, opacity 0.15s ease",
+                }}
+              >
+                <SkipForward size={16} fill="currentColor" />
+              </button>
+            </span>
+          </div>
+
+          {/* Right: Volume + Time */}
+          <div style={{
+            display: "flex", alignItems: "center", gap: space[3],
+            flex: "0 0 auto",
+          }}>
+            {/* Volume ? custom slider like progress bar */}
+            <div style={{
+              display: "flex", alignItems: "center", gap: space[2],
+            }}>
+              <Volume2 size={12} style={{ color: "var(--text-tertiary)", flexShrink: 0 }} />
+              <div
+                onMouseDown={(e) => {
+                  const rect = e.currentTarget.getBoundingClientRect();
+                  const v = Math.round(((e.clientX - rect.left) / rect.width) * 100);
+                  setVolume(Math.max(0, Math.min(100, v)));
+                }}
+                style={{
+                  width: 80, height: 6, borderRadius: 8,
+                  background: "rgba(128,128,128,0.18)",
+                  cursor: "pointer", position: "relative",
+                }}
+              >
+                <div style={{
+                  position: "absolute", top: 0, left: 0, height: "100%", borderRadius: 4,
+                  width: `${volume}%`,
+                  background: "var(--accent)",
+                  transition: "width 0.15s linear",
+                }} />
+              </div>
+              <span style={{
+                fontSize: 10, color: "var(--text-tertiary)",
+                fontVariantNumeric: "tabular-nums", minWidth: 26, textAlign: "right",
+              }}>
+                {volume}%
+              </span>
+            </div>
+            {/* Time */}
+            <span style={{
+              fontSize: fontSizes.xs, color: "var(--text-tertiary)",
+              fontVariantNumeric: "tabular-nums", whiteSpace: "nowrap",
+              minWidth: 80, textAlign: "right",
+            }}>
+              {fmtTime(playback.position_ms)} / {fmtTime(playback.length_ms)}
             </span>
           </div>
         </div>

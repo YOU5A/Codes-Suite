@@ -37,6 +37,7 @@
   --success: #34c759;
   --warning: #ff9500;
   --danger: #ff3b30;
+  --danger-rgb: 255,59,48;
   --shadow-sm: 0 1px 3px rgba(0,0,0,0.08);
   --shadow-md: 0 4px 12px rgba(0,0,0,0.13);
   --shadow-lg: 0 8px 32px rgba(0,0,0,0.17);
@@ -63,6 +64,7 @@
   --success: #30d158;
   --warning: #ff9f0a;
   --danger: #ff453a;
+  --danger-rgb: 255,69,58;
   --shadow-sm: 0 1px 3px rgba(0,0,0,0.20);
   --shadow-md: 0 4px 12px rgba(0,0,0,0.30);
   --shadow-lg: 0 8px 32px rgba(0,0,0,0.40);
@@ -114,6 +116,7 @@
   --success: #22c55e;
   --warning: #f59e0b;
   --danger: #ef4444;
+  --danger-rgb: 239,68,68;
   --shadow-sm: 0 1px 3px rgba(0,0,0,0.30);
   --shadow-md: 0 4px 12px rgba(0,0,0,0.40);
   --shadow-lg: 0 8px 32px rgba(0,0,0,0.50);
@@ -190,6 +193,7 @@
   --success: #22c55e;
   --warning: #f59e0b;
   --danger: #dc2626;
+  --danger-rgb: 220,38,38;
   --shadow-sm: 0 1px 3px rgba(0,0,0,0.30);
   --shadow-md: 0 4px 12px rgba(0,0,0,0.40);
   --shadow-lg: 0 8px 32px rgba(0,0,0,0.50);
@@ -410,3 +414,15 @@ input[type="range"]::-webkit-slider-thumb:hover{transform:scale(1.15)}
   transition: opacity 0.4s ease-out;
   border-radius: inherit;
 }
+/* Player control buttons */
+.ctrl-btn:hover {
+  color: var(--text-primary);
+}
+.ctrl-btn:active {
+  opacity: 0.7;
+}
+.ctrl-btn-play:hover {
+  box-shadow: 0 0 20px rgba(255,255,255,0.15);
+  background: rgba(255,255,255,0.12);
+}
+

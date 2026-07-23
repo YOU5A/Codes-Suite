@@ -1,10 +1,11 @@
-﻿/**
- * GlassToggle — Liquid Glass Toggle Switch
+/**
+ * GlassToggle ? Liquid Glass Toggle Switch
  *
  * Apple-style toggle switch with glass styling.
- * Uses flexbox centering — no absolute positioning drift.
+ * Semi-transparent accent + cursor-following glow.
  */
 
+import { useState, useCallback, useRef } from "react";
 import { motion } from "framer-motion";
 
 export interface GlassToggleProps {
@@ -19,6 +20,23 @@ const sizeConfig = {
   md: { width: 44, height: 26, radius: 13, knob: 20, pad: 3 },
 };
 
+const GLOW_COLOR = "rgba(255,255,255,0.18)";
+const GLOW_RADIUS = 280;
+
+function updateGlow(el: HTMLElement, cx: number, cy: number) {
+  const r = el.getBoundingClientRect();
+  if (r.width === 0 || r.height === 0) return;
+  const px = ((cx - r.left) / r.width) * 100;
+  const py = ((cy - r.top) / r.height) * 100;
+  el.style.setProperty("--tg-gx", px + "%");
+  el.style.setProperty("--tg-gy", py + "%");
+  el.style.setProperty("--tg-go", "1");
+}
+
+function clearGlow(el: HTMLElement) {
+  el.style.setProperty("--tg-go", "0");
+}
+
 export function GlassToggle({
   active,
   onChange,
@@ -27,9 +45,29 @@ export function GlassToggle({
 }: GlassToggleProps) {
   const cfg = sizeConfig[size];
   const knobTravel = cfg.width - cfg.knob - 2 * cfg.pad;
+  const [hovered, setHovered] = useState(false);
+  const ref = useRef<HTMLDivElement | null>(null);
+
+  const onMove = useCallback((e: React.MouseEvent) => {
+    if (disabled) return;
+    updateGlow(e.currentTarget as HTMLElement, e.clientX, e.clientY);
+  }, [disabled]);
+
+  const onEnter = useCallback((e: React.MouseEvent) => {
+    if (disabled) return;
+    setHovered(true);
+    updateGlow(e.currentTarget as HTMLElement, e.clientX, e.clientY);
+  }, [disabled]);
+
+  const onLeave = useCallback((e: React.MouseEvent) => {
+    if (disabled) return;
+    setHovered(false);
+    clearGlow(e.currentTarget as HTMLElement);
+  }, [disabled]);
 
   return (
     <div
+      ref={ref}
       role="switch"
       aria-checked={active}
       tabIndex={disabled ? -1 : 0}
@@ -40,6 +78,9 @@ export function GlassToggle({
           onChange(!active);
         }
       }}
+      onMouseMove={onMove}
+      onMouseEnter={onEnter}
+      onMouseLeave={onLeave}
       style={{
         display: "flex",
         alignItems: "center",
@@ -50,13 +91,37 @@ export function GlassToggle({
         cursor: disabled ? "not-allowed" : "pointer",
         flexShrink: 0,
         boxSizing: "border-box",
-        background: active ? "var(--accent)" : "var(--bg-tertiary)",
+        position: "relative",
+        background: active
+          ? "rgba(var(--accent-rgb), 0.30)"
+          : "var(--bg-tertiary)",
+        backdropFilter: active ? "blur(8px) saturate(1.4)" : "none",
+        WebkitBackdropFilter: active ? "blur(8px) saturate(1.4)" : "none",
         border: "1px solid",
-        borderColor: active ? "transparent" : "var(--border-color)",
-        transition: "background var(--transition-fast) ease, border-color var(--transition-fast) ease",
+        borderColor: active
+          ? "rgba(var(--accent-rgb), 0.5)"
+          : "var(--border-color)",
+        boxShadow: active && hovered
+          ? "0 0 16px rgba(var(--accent-rgb), 0.35)"
+          : "none",
+        transition: "background var(--transition-fast) ease, border-color var(--transition-fast) ease, box-shadow 0.25s ease",
         opacity: disabled ? 0.5 : 1,
+        overflow: "hidden",
       }}
     >
+      {/* Inner glow overlay */}
+      <span
+        aria-hidden="true"
+        style={{
+          position: "absolute",
+          inset: 0,
+          pointerEvents: "none",
+          background: `radial-gradient(${GLOW_RADIUS}px circle at var(--tg-gx, 50%) var(--tg-gy, 50%), ${GLOW_COLOR}, transparent 50%)`,
+          opacity: "var(--tg-go, 0)",
+          transition: "opacity 0.4s ease-out",
+          borderRadius: "inherit",
+        }}
+      />
       <motion.div
         animate={{ x: active ? knobTravel : 0 }}
         transition={{ type: "spring", stiffness: 500, damping: 30, mass: 0.8 }}
@@ -67,6 +132,8 @@ export function GlassToggle({
           background: "white",
           boxShadow: "0 1px 3px rgba(0,0,0,0.2)",
           flexShrink: 0,
+          position: "relative",
+          zIndex: 1,
         }}
       />
     </div>
