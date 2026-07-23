@@ -14,6 +14,7 @@ import traceback
 import base64
 import io
 import stat
+import mutagen
 
 # --- Resolve resource paths relative to this script ---
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -529,6 +530,61 @@ def handle_music_read_cover_file(params):
     except Exception as e:
         return {"error": str(e), "cover": None}
 
+def handle_music_get_lyrics(params):
+    """Get lyrics for a music file.
+    Looks for .lrc file alongside audio, then falls back to embedded lyrics."""
+    filepath = params.get("filepath", "")
+    if not filepath:
+        return {"error": "Missing filepath", "lyrics_text": None}
+
+    lyrics_text = None
+
+    # 1. Check for .lrc file alongside the audio file
+    base = os.path.splitext(filepath)[0]
+    for ext in [".lrc", ".LRC"]:
+        lrc_path = base + ext
+        if os.path.isfile(lrc_path):
+            try:
+                with open(lrc_path, "r", encoding="utf-8") as f:
+                    lyrics_text = f.read()
+                break
+            except UnicodeDecodeError:
+                try:
+                    with open(lrc_path, "r", encoding="gbk") as f:
+                        lyrics_text = f.read()
+                    break
+                except Exception:
+                    pass
+            except Exception:
+                pass
+
+    # 2. Fall back to embedded lyrics via mutagen
+    if not lyrics_text:
+        try:
+            audio = mutagen.File(filepath)
+            if audio is not None:
+                # MP3: ID3 USLT frame
+                if hasattr(audio, "tags") and audio.tags:
+                    from mutagen.id3 import USLT
+                    uslt_frames = audio.tags.getall("USLT")
+                    if uslt_frames:
+                        lyrics_text = uslt_frames[0].text
+                # FLAC/Vorbis
+                if not lyrics_text and hasattr(audio, "tags"):
+                    lyrics_tag = audio.tags.get("LYRICS")
+                    if lyrics_tag:
+                        lyrics_text = lyrics_tag[0] if isinstance(lyrics_tag, list) else str(lyrics_tag)
+                # MP4/M4A
+                if not lyrics_text and hasattr(audio, "tags"):
+                    mp4_lyr = audio.tags.get("©lyr")
+                    if mp4_lyr:
+                        lyrics_text = mp4_lyr[0] if isinstance(mp4_lyr, list) else str(mp4_lyr)
+        except Exception:
+            pass
+
+    return {"lyrics_text": lyrics_text}
+
+
 def handle_backup_clear_all(params):
     """Delete all backup files"""
     deleted = 0
@@ -591,6 +647,7 @@ METHODS = {
     "music.remove_cover": handle_music_remove_cover,
     "music.read_cover_file": handle_music_read_cover_file,
     "music.rename": handle_music_rename,
+    "music.get_lyrics": handle_music_get_lyrics,
 
     # Backups
     "backup.list": handle_backup_list,

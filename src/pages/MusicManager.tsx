@@ -20,6 +20,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { useToast } from "@/contexts/ToastContext";
 import { useConfirm } from "@/contexts/ConfirmContext";
 import { useMusicPlayer } from "@/contexts/MusicPlayerContext";
+import { useLyricManager, LyricWindow, LyricDisplay } from "@/lyrics";
 import type { MusicMetadata, PlaybackState, Page } from "@/types";
 import { useTheme } from "@/hooks/useTheme";
 import { getAnimDuration, EASE_OUT } from "@/utils/animations";
@@ -59,6 +60,11 @@ const t = {
     renameFailed: "重命名失败",
     nowPlaying: "正在播放",
     noMusic: "未选择曲目",
+    lyrics: "词",
+    lyricsTitle: "歌词",
+    lyricsLoading: "加载中...",
+    lyricsNoLyrics: "暂无歌词",
+    lyricsInstrumental: "纯音乐，请欣赏",
     saveTagsConfirm: "确定要保存标签到所选文件吗？",
     applyAllConfirm: "确定要将当前标签应用到所有文件吗？此操作不可撤销。",
     applyCoverConfirm: "确定要应用封面到所选文件吗？",
@@ -97,6 +103,11 @@ const t = {
     renameFailed: "Rename failed",
     nowPlaying: "Now Playing",
     noMusic: "No track selected",
+    lyrics: "Lyrics",
+    lyricsTitle: "Lyrics",
+    lyricsLoading: "Loading...",
+    lyricsNoLyrics: "No lyrics",
+    lyricsInstrumental: "Instrumental",
     saveTagsConfirm: "Save tags to the selected file?",
     applyAllConfirm: "Apply current tags to all files? This cannot be undone.",
     applyCoverConfirm: "Apply cover artwork to the selected file?",
@@ -137,6 +148,8 @@ export default function MusicManager({ onNavigate, fluidSettings: externalSettin
   const [isDraggingVolume, setIsDraggingVolume] = useState(false);
   const [progressHover, setProgressHover] = useState(false);
   const [playBtnGlow, setPlayBtnGlow] = useState({ x: 0.5, y: 0.5, visible: false });
+  const [lyricsVisible, setLyricsVisible] = useState(false);
+  const { lyricData, loading: lyricsLoading, error: lyricsError, currentLineIndex, currentTime } = useLyricManager();
   const [volumeHover, setVolumeHover] = useState(false);
   const [volGlow, setVolGlow] = useState({ x: 0.5, y: 0.5, visible: false });
   const [fluidSettingsOpen, setFluidSettingsOpen] = useState(false);
@@ -746,6 +759,25 @@ export default function MusicManager({ onNavigate, fluidSettings: externalSettin
             display: "flex", alignItems: "center", justifyContent: "center", gap: space[4],
             flex: 1,
           }}>
+            {/* Lyrics Toggle */}
+            <span style={{ width: 34, height: 34, display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+              <GlassButton
+                variant="ghost"
+                size="sm"
+                onClick={() => setLyricsVisible(v => !v)}
+                style={{
+                  width: 34, height: 34, minWidth: 34, padding: 0,
+                  borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center",
+                  fontSize: 11, fontWeight: 600,
+                  color: lyricsVisible ? "var(--accent)" : "var(--text-tertiary)",
+                  transition: "color 0.2s ease",
+                }}
+                title={tx.lyrics}
+              >
+                {tx.lyrics}
+              </GlassButton>
+            </span>
+
             {/* Prev */}
             <span style={{ width: 34, height: 34, display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
               <button
@@ -881,6 +913,19 @@ export default function MusicManager({ onNavigate, fluidSettings: externalSettin
         </div>
       </GlassSurface>
     </motion.div>
+
+      {/* Lyrics Window */}
+      <LyricWindow open={lyricsVisible} onClose={() => setLyricsVisible(false)}>
+        <LyricDisplay
+          lyricData={lyricData}
+          currentTime={currentTime}
+          loading={lyricsLoading}
+          error={lyricsError}
+          loadingText={tx.lyricsLoading}
+          noLyricsText={tx.lyricsNoLyrics}
+          instrumentalText={tx.lyricsInstrumental}
+        />
+      </LyricWindow>
 
       <FluidSettingsPanel
         open={fluidSettingsOpen}
