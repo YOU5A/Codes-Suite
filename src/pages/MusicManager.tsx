@@ -94,6 +94,7 @@ export default function MusicManager() {
   const [folder, setFolder] = useState("");
   const [files, setFiles] = useState<string[]>([]);
   const [selectedFile, setSelectedFile] = useState("");
+  const [playingFile, setPlayingFile] = useState("");
   const [metadata, setMetadata] = useState<MusicMetadata | null>(null);
   const [coverB64, setCoverB64] = useState<string | null>(null);
   const [newCoverPath, setNewCoverPath] = useState("");
@@ -144,6 +145,7 @@ export default function MusicManager() {
           const cf = await window.electronAPI?.python.call('music.get_current_file').catch(() => null);
           if (cf?.filepath && !cf.error) {
             selectFile(cf.filepath);
+            setPlayingFile(cf.filepath);
           }
         } catch {}
       } catch {}
@@ -216,8 +218,21 @@ export default function MusicManager() {
   const playFile = async (fp: string) => {
 
     if (!fp) return;
+    setSelectedFile(fp);
+    const m = await window.electronAPI?.python.call("music.get_metadata", { filepath: fp });
+    if (m && !m.error) {
+      setMetadata(m);
+      setTagTitle(m.title ?? ""); setTagArtist(m.artist ?? "");
+      setTagAlbum(m.album ?? ""); setTagYear(m.year ?? "");
+    }
+    const c = await window.electronAPI?.python.call("music.extract_cover", { filepath: fp });
+    setCoverB64(c?.cover ?? null);
+    setNewCoverPath(""); setCoverPreviewB64(null);
+    const fname = fp.split("\\").pop() || fp;
+    setRenameName(fname.replace(/\.[^.]+$/, ""));
     const r = await window.electronAPI?.python.call("music.play", { filepath: fp });
     if (r && !r.error) {
+      setPlayingFile(fp);
       setPlayback({ position_ms: 0, length_ms: r.length_ms ?? 0, is_playing: true, is_paused: false, is_open: true });
       startPoll();
     }
@@ -227,6 +242,12 @@ export default function MusicManager() {
       if (selectedFile) playFile(selectedFile); else showToast(tx.noFileSelected, "warning");
       return;
     }
+    // If a different file is selected, play it instead of toggling
+    if (playingFile && selectedFile !== playingFile) {
+      playFile(selectedFile);
+      return;
+    }
+    // Same file - just toggle pause/resume
     const r = await window.electronAPI?.python.call("music.pause");
     if (r && !r.error) {
       const p = r.is_playing ?? false;
@@ -237,6 +258,7 @@ export default function MusicManager() {
   const stop = async () => {
     await window.electronAPI?.python.call("music.stop");
     stopPoll();
+    setPlayingFile("");
     setPlayback({ position_ms: 0, length_ms: 0, is_playing: false, is_paused: false, is_open: false });
   };
   // Calculate seek target from mouse position
@@ -490,6 +512,7 @@ export default function MusicManager() {
                       <div
                         key={fp}
                         onClick={() => { selectFile(fp); }}
+                        onDoubleClick={() => { playFile(fp); }}
                         style={{
                           padding: space[2] + "px " + space[4] + "px",
                           cursor: "pointer",
@@ -537,7 +560,7 @@ export default function MusicManager() {
             maxWidth: "65%", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
           }}>
             {playback.is_playing || playback.is_paused
-              ? (selectedFile ? selectedFile.split("\\").pop() : tx.nowPlaying)
+              ? (playingFile ? playingFile.split("\\").pop() : tx.nowPlaying)
               : tx.noMusic}
           </span>
           <span style={{
