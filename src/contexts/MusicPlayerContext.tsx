@@ -14,6 +14,7 @@ interface MusicPlayerContextValue {
   toggle: (currentSelectedFile?: string) => void;
   stop: () => void;
   seek: (clientX: number, progressRef: React.RefObject<HTMLDivElement | null>) => void;
+  seekTo: (seconds: number) => void;
   setVolume: (v: number) => void;
   fmtTime: (ms: number) => string;
 }
@@ -26,6 +27,7 @@ const MusicPlayerContext = createContext<MusicPlayerContextValue>({
   toggle: () => {},
   stop: () => {},
   seek: () => {},
+  seekTo: () => {},
   setVolume: () => {},
   fmtTime: () => "0:00",
 });
@@ -152,6 +154,14 @@ export function MusicPlayerProvider({ children }: { children: React.ReactNode })
     setAudioState(prev => ({ ...prev, pos: sec }));
   }, [audioState.duration]);
 
+  const seekTo = useCallback((seconds: number) => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    const clamped = Math.max(0, Math.min(seconds, audio.duration || audioState.duration || 0));
+    audio.currentTime = clamped;
+    setAudioState(prev => ({ ...prev, pos: clamped }));
+  }, [audioState.duration]);
+
   const setVolume = useCallback((v: number) => {
     setVolumeState(v);
     localStorage.setItem("music_volume", String(v));
@@ -165,7 +175,7 @@ export function MusicPlayerProvider({ children }: { children: React.ReactNode })
 
   return (
     <MusicPlayerContext.Provider
-      value={{ audioState, playingFile, volume, playFile, toggle, stop, seek, setVolume, fmtTime }}
+      value={{ audioState, playingFile, volume, playFile, toggle, stop, seek, seekTo, setVolume, fmtTime }}
     >
       {children}
     </MusicPlayerContext.Provider>

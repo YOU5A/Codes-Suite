@@ -1,8 +1,9 @@
-﻿const { app, BrowserWindow, ipcMain, dialog, shell, Tray, Menu, nativeTheme } = require("electron");
+const { app, BrowserWindow, ipcMain, dialog, shell, Tray, Menu, nativeTheme } = require("electron");
 const fs = require("fs");
 const path = require("path");
 const { execSync, spawnSync } = require("child_process");
 const { PythonBridge } = require("./python-bridge");
+const { cloudsearch, lyric } = require("NeteaseCloudMusicApi");
 
 let mainWindow = null;
 let pythonBridge = null;
@@ -253,6 +254,29 @@ function setupIPC() {
   ipcMain.handle("shell:openExternal", async (_event, url) => shell.openExternal(url));
   ipcMain.handle("app:getPath", async (_event, name) => app.getPath(name));
 }
+
+  // ---- Music: Online Lyrics Search (Netease) ----
+  ipcMain.handle("music:searchLyrics", async (_event, title, artist) => {
+    try {
+      const keywords = artist ? `${title} ${artist}` : title;
+      const searchRes = await cloudsearch({ keywords, type: 1, limit: 5 });
+      const songs = searchRes?.body?.result?.songs;
+      if (!songs || songs.length === 0) {
+        return { lyrics_text: null, source: "netease" };
+      }
+      const songId = songs[0].id;
+      const lyricRes = await lyric({ id: songId });
+      const lrc = lyricRes?.body?.lrc?.lyric;
+      if (!lrc) {
+        return { lyrics_text: null, source: "netease" };
+      }
+      return { lyrics_text: lrc, source: "netease" };
+    } catch (e) {
+      console.error("[Music:SearchLyrics]", e.message);
+      return { lyrics_text: null, source: "netease", error: e.message };
+    }
+  });
+
 
 // ---- Python Bridge ----
 function startPythonBridge() {

@@ -16,6 +16,7 @@
     "dependencies": {
         "framer-motion": "^12.40.0",
         "lucide-react": "^1.17.0",
+        "NeteaseCloudMusicApi": "^4.32.0",
         "react": "^19.2.7",
         "react-dom": "^19.2.7"
     },

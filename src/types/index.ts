@@ -113,6 +113,10 @@ export interface ElectronAPI {
   app: {
     getPath: (name: string) => Promise<string>;
   };
+
+  music: {
+    searchLyrics: (title: string, artist?: string) => Promise<{ lyrics_text: string | null; source: string; error?: string }>;
+  };
   settings: {
     get: (key: string) => Promise<any>;
     set: (key: string, value: any) => Promise<boolean>;

@@ -1,7 +1,8 @@
-﻿/**
+/**
  * LyricManager — 歌词状态管理 Hook
  *
  * 负责: 当前歌曲信息 / 获取歌词 / 缓存 / 时间同步
+ * 歌词来源优先级: 本地 .lrc > 嵌入式标签 > 网易云在线搜索
  *
  * @module lyrics/LyricManager
  */
@@ -27,6 +28,12 @@ export interface LyricManagerState {
   currentTime: number;
 }
 
+/** 从文件路径提取歌曲名（fallback） */
+function extractTitleFromPath(filePath: string): string {
+  const name = filePath.replace(/\\/g, "/").split("/").pop() || "";
+  return name.replace(/\.[^.]+$/, "");
+}
+
 export function useLyricManager() {
   const { audioState, playingFile } = useMusicPlayer();
   const [lyricData, setLyricData] = useState<LyricData | null>(null);
@@ -47,7 +54,7 @@ export function useLyricManager() {
     return idx;
   }, []);
 
-  /** 获取歌词 */
+  /** 获取歌词（本地优先，在线 fallback） */
   const fetchLyrics = useCallback(async (filePath: string) => {
     if (!filePath) return;
 
@@ -62,19 +69,49 @@ export function useLyricManager() {
     setError(null);
 
     try {
-      // 通过 Python Bridge 获取歌词文件（与音频同目录的 .lrc 文件）
-      const result = await window.electronAPI?.python.call("music.get_lyrics", {
+      // ---- 第 1 步: 尝试本地歌词（Python Bridge） ----
+      const localResult = await window.electronAPI?.python.call("music.get_lyrics", {
         filepath: filePath,
       });
 
-      if (result?.lyrics_text) {
-        const data = parseLyrics(result.lyrics_text);
+      if (localResult?.lyrics_text) {
+        const data = parseLyrics(localResult.lyrics_text);
         lyricCache.set(filePath, data);
         setLyricData(data);
-      } else {
-        setLyricData(null);
-        setError("暂无歌词");
+        setLoading(false);
+        return;
       }
+
+      // ---- 第 2 步: 在线搜索（网易云音乐） ----
+      let title = extractTitleFromPath(filePath);
+      let artist = "";
+
+      // 尝试从音频元数据中获取更准确的 title/artist
+      try {
+        const metaResult = await window.electronAPI?.python.call("music.get_metadata", {
+          filepath: filePath,
+        });
+        if (metaResult?.title) title = metaResult.title;
+        if (metaResult?.artist) artist = metaResult.artist;
+      } catch {
+        // 元数据获取失败，使用文件名 fallback
+      }
+
+      if (window.electronAPI?.music?.searchLyrics) {
+        const onlineResult = await window.electronAPI.music.searchLyrics(title, artist || undefined);
+
+        if (onlineResult?.lyrics_text) {
+          const data = parseLyrics(onlineResult.lyrics_text);
+          lyricCache.set(filePath, data);
+          setLyricData(data);
+          setLoading(false);
+          return;
+        }
+      }
+
+      // ---- 第 3 步: 无歌词可用 ----
+      setLyricData(null);
+      setError("暂无歌词");
     } catch (e: any) {
       setError(e?.message || "获取歌词失败");
       setLyricData(null);

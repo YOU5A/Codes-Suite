@@ -1,4 +1,4 @@
-﻿const { contextBridge, ipcRenderer } = require("electron");
+const { contextBridge, ipcRenderer } = require("electron");
 
 const api = {
   window: {
@@ -34,6 +34,10 @@ const api = {
   shell: {
     openPath: (filePath) => ipcRenderer.invoke("shell:openPath", filePath),
     openExternal: (url) => ipcRenderer.invoke("shell:openExternal", url),
+  },
+
+  music: {
+    searchLyrics: (title, artist) => ipcRenderer.invoke("music:searchLyrics", title, artist),
   },
   app: {
     getPath: (name) => ipcRenderer.invoke("app:getPath", name),

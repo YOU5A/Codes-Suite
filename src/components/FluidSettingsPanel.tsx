@@ -91,12 +91,6 @@ const labelStyle: React.CSSProperties = {
   flexShrink: 0,
 };
 
-const sublabelStyle: React.CSSProperties = {
-  fontSize: 11,
-  color: "var(--text-tertiary)",
-  marginTop: 2,
-};
-
 const rowStyle: React.CSSProperties = {
   display: "flex",
   alignItems: "center",
@@ -122,42 +116,26 @@ const separatorStyle: React.CSSProperties = {
 
 const t: Record<Language, Record<string, string>> = {
   zh: {
-    title: "流体背景设置",
-    subtitle: "Fluid Background Settings",
-    enable: "开启背景",
-    enableSub: "Enable Background",
-    speed: "速度",
-    speedSub: "Speed",
-    colorMode: "颜色模式",
-    colorModeSub: "Color Mode",
-    frameRate: "帧率",
-    frameRateSub: "Frame Rate",
-    intensity: "强度",
-    intensitySub: "Intensity",
-    blur: "模糊",
-    blurSub: "Blur (Coming Soon)",
-    style: "风格",
-    styleSub: "Style",
+    title: "流体背景设置",
+    enable: "开启背景",
+    speed: "速度",
+    colorMode: "颜色模式",
+    frameRate: "帧率",
+    intensity: "强度",
+    blur: "模糊",
+    style: "风格",
     reset: "恢复默认",
     resetTitle: "恢复默认设置",
   },
   en: {
-    title: "Fluid Background",
-    subtitle: "Fluid Background Settings",
-    enable: "Enable Background",
-    enableSub: "Enable Background",
-    speed: "Speed",
-    speedSub: "Speed",
-    colorMode: "Color Mode",
-    colorModeSub: "Color Mode",
-    frameRate: "Frame Rate",
-    frameRateSub: "Frame Rate",
-    intensity: "Intensity",
-    intensitySub: "Intensity",
-    blur: "Blur",
-    blurSub: "Blur (Coming Soon)",
-    style: "Style",
-    styleSub: "Style",
+    title: "Fluid Background",
+    enable: "Enable Background",
+    speed: "Speed",
+    colorMode: "Color Mode",
+    frameRate: "Frame Rate",
+    intensity: "Intensity",
+    blur: "Blur",
+    style: "Style",
     reset: "Reset Defaults",
     resetTitle: "Reset to default settings",
   },
@@ -212,15 +190,11 @@ const FluidSettingsPanel: FC<FluidSettingsPanelProps> = ({ open, onClose, values
           </button>
         </div>
 
-        <div style={{ fontSize: 12, color: "var(--text-tertiary)", marginTop: -8 }}>
-          {tx.subtitle}
-        </div>
 
         {/* ── 开启背景 ── */}
         <div style={rowStyle}>
           <div>
             <div style={labelStyle}>{tx.enable}</div>
-            <div style={sublabelStyle}>{tx.enableSub}</div>
           </div>
           <GlassToggle active={values.enabled} onChange={(v) => set("enabled", v)} />
         </div>
@@ -232,7 +206,6 @@ const FluidSettingsPanel: FC<FluidSettingsPanelProps> = ({ open, onClose, values
           <div style={{ display: "flex", justifyContent: "space-between" }}>
             <div>
               <div style={{...labelStyle, opacity: dim}}>{tx.speed}</div>
-              <div style={{...sublabelStyle, opacity: dim * 0.8}}>{tx.speedSub}</div>
             </div>
             <span style={{ fontSize: 12, color: "var(--text-secondary)", fontVariantNumeric: "tabular-nums", opacity: dim }}>
               {values.speedMultiplier.toFixed(1)}x
@@ -260,7 +233,6 @@ const FluidSettingsPanel: FC<FluidSettingsPanelProps> = ({ open, onClose, values
         <div style={sectionStyle}>
           <div>
             <div style={{...labelStyle, opacity: dim}}>{tx.colorMode}</div>
-            <div style={{...sublabelStyle, opacity: dim * 0.8}}>{tx.colorModeSub}</div>
           </div>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
             {COLOR_MODE_OPTIONS.map((opt) => (
@@ -299,7 +271,6 @@ const FluidSettingsPanel: FC<FluidSettingsPanelProps> = ({ open, onClose, values
         <div style={rowStyle}>
           <div>
             <div style={{...labelStyle, opacity: dim}}>{tx.frameRate}</div>
-            <div style={{...sublabelStyle, opacity: dim * 0.8}}>{tx.frameRateSub}</div>
           </div>
           <div style={{ display: "flex", gap: 4, alignItems: "center" }}>
             {([30, 60] as const).map((fps) => (
@@ -341,7 +312,6 @@ const FluidSettingsPanel: FC<FluidSettingsPanelProps> = ({ open, onClose, values
           <div style={{ display: "flex", justifyContent: "space-between" }}>
             <div>
               <div style={{...labelStyle, opacity: dim}}>{tx.intensity}</div>
-              <div style={{...sublabelStyle, opacity: dim * 0.8}}>{tx.intensitySub}</div>
             </div>
             <span style={{ fontSize: 12, color: "var(--text-secondary)", fontVariantNumeric: "tabular-nums", opacity: dim }}>
               {Math.round(values.intensity * 100)}%
@@ -370,7 +340,6 @@ const FluidSettingsPanel: FC<FluidSettingsPanelProps> = ({ open, onClose, values
           <div style={{ display: "flex", justifyContent: "space-between" }}>
             <div>
               <div style={{...labelStyle, opacity: 0.35}}>{tx.blur}</div>
-              <div style={{...sublabelStyle, opacity: dim * 0.8}}>Blur (Coming Soon)</div>
             </div>
             <span style={{ fontSize: 12, color: "var(--text-tertiary)", fontVariantNumeric: "tabular-nums", opacity: 0.4 }}>
               N/A
@@ -399,7 +368,6 @@ const FluidSettingsPanel: FC<FluidSettingsPanelProps> = ({ open, onClose, values
         <div style={sectionStyle}>
           <div>
             <div style={{...labelStyle, opacity: dim}}>{tx.style}</div>
-            <div style={{...sublabelStyle, opacity: dim * 0.8}}>{tx.styleSub}</div>
           </div>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
             {STYLE_OPTIONS.map((opt) => (

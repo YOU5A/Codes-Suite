@@ -1,5 +1,7 @@
 /**
  * LyricWindow ? Draggable lyrics overlay with macOS traffic light close button.
+ *
+ * Perf: transform for compositor-only drag, rAF throttle, fluid quality aware.
  */
 
 import { useState, useRef, useCallback, useEffect, type ReactNode } from "react";
@@ -8,6 +10,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { GlassSurface } from "@/design-system";
 import { glassPopIn } from "@/design-system";
 import { zLayers } from "@/design-system";
+import { loadFluidSettings, type FluidSettingsValues } from "@/components/FluidSettingsPanel";
 
 interface LyricWindowProps {
   open: boolean;
@@ -31,7 +34,7 @@ function savePosition(x: number, y: number) {
   try { localStorage.setItem(POS_KEY, JSON.stringify({ x, y })); } catch {}
 }
 
-/* ??? macOS Traffic Light Red Dot ??? */
+/* macOS Traffic Light Red Dot */
 function CloseDot({ onClick }: { onClick: () => void }) {
   const [hovered, setHovered] = useState(false);
   const DOT = 12;
@@ -73,6 +76,20 @@ export default function LyricWindow({ open, onClose, children }: LyricWindowProp
   const [pos, setPos] = useState(loadPosition);
   const dragging = useRef(false);
   const offset = useRef({ x: 0, y: 0 });
+  const rafRef = useRef(0);
+  // Track drag state for noGlow optimization
+  const [isDragging, setIsDragging] = useState(false);
+  // Read fluid quality for adaptive throttle
+  const fluidFpsRef = useRef<FluidSettingsValues["fps"]>(60);
+
+  useEffect(() => {
+    fluidFpsRef.current = loadFluidSettings().fps ?? 60;
+    const handler = () => {
+      fluidFpsRef.current = loadFluidSettings().fps ?? 60;
+    };
+    window.addEventListener("fluidSettingsChanged", handler);
+    return () => window.removeEventListener("fluidSettingsChanged", handler);
+  }, []);
 
   useEffect(() => {
     const onResize = () => {
@@ -88,6 +105,7 @@ export default function LyricWindow({ open, onClose, children }: LyricWindowProp
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
     if ((e.target as HTMLElement).closest("button")) return;
     dragging.current = true;
+    setIsDragging(true);
     offset.current = { x: e.clientX - pos.x, y: e.clientY - pos.y };
     e.preventDefault();
   }, [pos]);
@@ -95,14 +113,25 @@ export default function LyricWindow({ open, onClose, children }: LyricWindowProp
   useEffect(() => {
     const onMove = (e: MouseEvent) => {
       if (!dragging.current) return;
-      setPos({
-        x: Math.max(0, Math.min(e.clientX - offset.current.x, window.innerWidth - WIN_WIDTH)),
-        y: Math.max(0, Math.min(e.clientY - offset.current.y, window.innerHeight - 60)),
+      // rAF throttle: one update per frame
+      if (rafRef.current) return;
+      rafRef.current = requestAnimationFrame(() => {
+        rafRef.current = 0;
+        if (!dragging.current) return;
+        setPos({
+          x: Math.max(0, Math.min(e.clientX - offset.current.x, window.innerWidth - WIN_WIDTH)),
+          y: Math.max(0, Math.min(e.clientY - offset.current.y, window.innerHeight - 60)),
+        });
       });
     };
     const onUp = () => {
       if (dragging.current) {
         dragging.current = false;
+        setIsDragging(false);
+        if (rafRef.current) {
+          cancelAnimationFrame(rafRef.current);
+          rafRef.current = 0;
+        }
         setPos(p => { savePosition(p.x, p.y); return p; });
       }
     };
@@ -124,12 +153,15 @@ export default function LyricWindow({ open, onClose, children }: LyricWindowProp
           exit="exit"
           transition={{ type: "spring", stiffness: 200, damping: 24, mass: 0.8 }}
           style={{
-            position: "fixed", left: pos.x, top: pos.y,
+            position: "fixed",
+            left: pos.x, top: pos.y,
             zIndex: zLayers.overlay, width: WIN_WIDTH, height: WIN_HEIGHT,
+            willChange: isDragging ? "left, top" : "auto",
           }}
         >
           <GlassSurface
             tier="regular"
+            noGlow={isDragging}
             onMouseDown={handleMouseDown}
             style={{
               padding: "10px 12px 0",

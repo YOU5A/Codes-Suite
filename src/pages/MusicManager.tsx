@@ -46,6 +46,7 @@ const t = {
     coverOps: "封面操作",
     selectCover: "选择封面",
     applyCover: "应用到选中",
+    saveCover: "保存封面",
     removeCover: "删除封面",
     renameSelected: "重命名选中",
     renameAll: "全部重命名",
@@ -89,6 +90,7 @@ const t = {
     coverOps: "Cover",
     selectCover: "Select",
     applyCover: "Apply",
+    saveCover: "Save",
     removeCover: "Remove",
     renameSelected: "Rename",
     renameAll: "Rename All",
@@ -138,7 +140,7 @@ export default function MusicManager({ onNavigate, fluidSettings: externalSettin
   const [tagGenre, setTagGenre] = useState("");
   const [renameName, setRenameName] = useState("");
 
-  const { audioState, playingFile, volume, playFile: contextPlayFile, toggle: contextToggle, seek: contextSeek, setVolume, fmtTime } = useMusicPlayer();
+  const { audioState, playingFile, volume, playFile: contextPlayFile, toggle: contextToggle, seek: contextSeek, seekTo, setVolume, fmtTime } = useMusicPlayer();
   const [saving, setSaving] = useState(false);
   const progressRef = useRef<HTMLDivElement | null>(null);
   const volumeRef = useRef<HTMLDivElement | null>(null);
@@ -413,6 +415,25 @@ export default function MusicManager({ onNavigate, fluidSettings: externalSettin
     showToast(r?.success ? tx.coverApplied : (r?.error ?? ""), r?.success ? "success" : "error");
     if (r?.success) selectFile(selectedFile);
   };
+  const saveCover = () => {
+    if (!coverB64) return;
+    const byteCharacters = atob(coverB64);
+    const byteNumbers = new Array(byteCharacters.length);
+    for (let i = 0; i < byteCharacters.length; i++) {
+      byteNumbers[i] = byteCharacters.charCodeAt(i);
+    }
+    const byteArray = new Uint8Array(byteNumbers);
+    const blob = new Blob([byteArray], { type: "image/jpeg" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "cover.jpg";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
   const removeCover = async () => {
     if (!selectedFile) return;
     const ok = await confirm({ title: tx.removeCoverConfirm, danger: true });
@@ -520,6 +541,10 @@ export default function MusicManager({ onNavigate, fluidSettings: externalSettin
                 <GlassButton variant="secondary" size="sm" inline={false} onClick={applyCover}
                   style={{ justifyContent: "center" }}>
                   {tx.applyCover}
+                </GlassButton>
+                <GlassButton variant="secondary" size="sm" inline={false} onClick={saveCover}
+                  style={{ justifyContent: "center" }}>
+                  <Save size={12} /> {tx.saveCover}
                 </GlassButton>
                 <GlassButton variant="secondary" size="sm" inline={false} onClick={removeCover}
                   style={{ justifyContent: "center" }}>
@@ -758,6 +783,7 @@ export default function MusicManager({ onNavigate, fluidSettings: externalSettin
           <div style={{
             display: "flex", alignItems: "center", justifyContent: "center", gap: space[4],
             flex: 1,
+            paddingRight: 120,
           }}>
             {/* Lyrics Toggle */}
             <span style={{ width: 34, height: 34, display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
@@ -924,6 +950,7 @@ export default function MusicManager({ onNavigate, fluidSettings: externalSettin
           loadingText={tx.lyricsLoading}
           noLyricsText={tx.lyricsNoLyrics}
           instrumentalText={tx.lyricsInstrumental}
+          onLineClick={seekTo}
         />
       </LyricWindow>
 
