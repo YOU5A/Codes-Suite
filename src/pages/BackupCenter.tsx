@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
 import { RotateCcw, Trash2, FolderOpen, Download } from "lucide-react";
 import {
@@ -168,7 +168,7 @@ export default function BackupCenter(_props: Props) {
         />
       ) : (
         /* Backup List */
-        <div className="scroll-fade-edge" style={{ display: "flex", flexDirection: "column", gap: space[3], flex: 1, overflowY: "auto", minHeight: 0 }}>
+        <div className="scroll-fade-edge" style={{ display: "flex", flexDirection: "column", gap: space[3], flex: 1, overflowY: "auto", minHeight: 0, paddingTop: space[5], paddingBottom: space[5] }}>
           {backups.map((bp) => (
             <GlassCard
               key={bp.filename}

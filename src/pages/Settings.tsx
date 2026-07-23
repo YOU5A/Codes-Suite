@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback } from "react";
+﻿import { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Sun, Moon, Monitor, Globe, Palette,
@@ -126,7 +126,7 @@ const themeDropdownOptions: { value: Theme; icon: React.ReactNode; key: string }
 
 const themeColorMap: Record<Theme, string> = {
   light: "#0071e3",
-  dark: "#0a84ff",
+  dark: "#1a2a4a",
   auto: "transparent",
   graphite: "#5856d6",
   midnight: "#6366f1",

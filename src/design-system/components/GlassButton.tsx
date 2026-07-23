@@ -33,11 +33,11 @@ const sizeStyles: Record<ButtonSize, React.CSSProperties> = {
 function variantBase(variant: ButtonVariant): React.CSSProperties {
   switch (variant) {
     case "primary":
-      return { background: "rgba(var(--accent-rgb), 0.25)", color: "color-mix(in srgb, var(--accent) 40%, white)", border: "1px solid rgba(var(--accent-rgb), 0.35)", fontWeight: 500, backdropFilter: "blur(12px) saturate(1.4)", WebkitBackdropFilter: "blur(12px) saturate(1.4)" };
+      return { background: "rgba(var(--accent-rgb), 0.25)", color: "var(--accent)", border: "1px solid rgba(var(--accent-rgb), 0.35)", fontWeight: 500, backdropFilter: "blur(12px) saturate(1.4)", WebkitBackdropFilter: "blur(12px) saturate(1.4)" };
     case "secondary":
       return { background: "var(--bg-secondary)", color: "var(--text-primary)", border: "1.5px solid var(--border-color)", fontWeight: 500, backdropFilter: "blur(15px)", WebkitBackdropFilter: "blur(15px)" };
     case "danger":
-      return { background: "rgba(var(--danger-rgb), 0.25)", color: "color-mix(in srgb, var(--danger) 40%, white)", border: "1px solid rgba(var(--danger-rgb), 0.35)", fontWeight: 500, backdropFilter: "blur(12px) saturate(1.4)", WebkitBackdropFilter: "blur(12px) saturate(1.4)" };
+      return { background: "rgba(var(--danger-rgb), 0.25)", color: "var(--danger)", border: "1px solid rgba(var(--danger-rgb), 0.35)", fontWeight: 500, backdropFilter: "blur(12px) saturate(1.4)", WebkitBackdropFilter: "blur(12px) saturate(1.4)" };
     case "ghost":
       return { background: "transparent", color: "var(--text-secondary)", border: "none", backdropFilter: "none", WebkitBackdropFilter: "none" };
     case "input":

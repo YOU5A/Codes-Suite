@@ -130,9 +130,11 @@ export default function MusicManager({ onNavigate, fluidSettings: externalSettin
   const { audioState, playingFile, volume, playFile: contextPlayFile, toggle: contextToggle, seek: contextSeek, setVolume, fmtTime } = useMusicPlayer();
   const [saving, setSaving] = useState(false);
   const progressRef = useRef<HTMLDivElement | null>(null);
+  const volumeRef = useRef<HTMLDivElement | null>(null);
   const listRef = useRef<HTMLDivElement | null>(null);
   const hasScanned = useRef(false);
   const [isDragging, setIsDragging] = useState(false);
+  const [isDraggingVolume, setIsDraggingVolume] = useState(false);
   const [progressHover, setProgressHover] = useState(false);
   const [playBtnGlow, setPlayBtnGlow] = useState({ x: 0.5, y: 0.5, visible: false });
   const [volumeHover, setVolumeHover] = useState(false);
@@ -266,6 +268,18 @@ export default function MusicManager({ onNavigate, fluidSettings: externalSettin
     };
   }, [isDragging]);
 
+  useEffect(() => {
+    if (!isDraggingVolume) return;
+    const onMove = (e: MouseEvent) => doSetVolume(e.clientX);
+    const onUp = () => setIsDraggingVolume(false);
+    window.addEventListener("mousemove", onMove);
+    window.addEventListener("mouseup", onUp);
+    return () => {
+      window.removeEventListener("mousemove", onMove);
+      window.removeEventListener("mouseup", onUp);
+    };
+  }, [isDraggingVolume]);
+
   const playFile = (fp: string) => {
     if (!fp) return;
     setSelectedFile(fp);
@@ -321,6 +335,19 @@ export default function MusicManager({ onNavigate, fluidSettings: externalSettin
     e.preventDefault();
     setIsDragging(true);
     doSeek(e.clientX);
+  };
+
+  const doSetVolume = (clientX: number) => {
+    if (!volumeRef.current) return;
+    const rect = volumeRef.current.getBoundingClientRect();
+    const v = Math.round(((clientX - rect.left) / rect.width) * 100);
+    setVolume(Math.max(0, Math.min(100, v)));
+  };
+
+  const handleVolumeMouseDown = (e: React.MouseEvent) => {
+    e.preventDefault();
+    setIsDraggingVolume(true);
+    doSetVolume(e.clientX);
   };
 
   const playback = {
@@ -591,11 +618,15 @@ export default function MusicManager({ onNavigate, fluidSettings: externalSettin
                           cursor: "pointer",
                           fontSize: fontSizes.sm,
                           color: active ? "var(--accent)" : "var(--text-secondary)",
-                          background: active ? "var(--accent-bg)" : "transparent",
+                          background: active
+                            ? "rgba(var(--accent-rgb, 99,102,241), 0.12)"
+                            : "rgba(255,255,255,0.03)",
+                          backdropFilter: "blur(8px) saturate(1.2)",
+                          WebkitBackdropFilter: "blur(8px) saturate(1.2)",
                           borderLeft: active ? "3px solid var(--accent)" : "3px solid transparent",
                           display: "flex", alignItems: "center", gap: space[2],
                           position: "relative", overflow: "hidden",
-                          transition: "background var(--transition-fast)",
+                          transition: "background var(--transition-fast), border-color var(--transition-fast)",
                         }}
                       >
                         <span style={{
@@ -623,7 +654,7 @@ export default function MusicManager({ onNavigate, fluidSettings: externalSettin
 
       {/* Player Bar ? Apple Music style */}
       <GlassSurface
-        tier="elevated"
+        tier="regular"
         style={{
           flexShrink: 0,
           padding: `${space[3]}px ${space[5]}px ${space[4]}px`,
@@ -803,22 +834,32 @@ export default function MusicManager({ onNavigate, fluidSettings: externalSettin
             }}>
               <Volume2 size={12} style={{ color: "var(--text-tertiary)", flexShrink: 0 }} />
               <div
-                onMouseDown={(e) => {
-                  const rect = e.currentTarget.getBoundingClientRect();
-                  const v = Math.round(((e.clientX - rect.left) / rect.width) * 100);
-                  setVolume(Math.max(0, Math.min(100, v)));
-                }}
+                ref={volumeRef}
+                onMouseDown={handleVolumeMouseDown}
+                onMouseEnter={() => setVolumeHover(true)}
+                onMouseLeave={() => setVolumeHover(false)}
                 style={{
-                  width: 80, height: 6, borderRadius: 8,
+                  width: 80, height: volumeHover || isDraggingVolume ? 6 : 4, borderRadius: 3,
                   background: "rgba(128,128,128,0.18)",
                   cursor: "pointer", position: "relative",
+                  transition: "height 0.2s ease",
                 }}
               >
                 <div style={{
-                  position: "absolute", top: 0, left: 0, height: "100%", borderRadius: 4,
+                  position: "absolute", top: 0, left: 0, height: "100%", borderRadius: 3,
                   width: `${volume}%`,
                   background: "var(--accent)",
-                  transition: "width 0.15s linear",
+                  transition: isDraggingVolume ? "none" : "width 0.15s linear",
+                }} />
+                <div style={{
+                  position: "absolute", top: "50%", left: `${volume}%`,
+                  width: volumeHover || isDraggingVolume ? 12 : 0, height: volumeHover || isDraggingVolume ? 12 : 0,
+                  borderRadius: "50%",
+                  background: "var(--accent)",
+                  boxShadow: "0 1px 4px rgba(0,0,0,0.25)",
+                  transform: "translate(-50%, -50%)",
+                  transition: isDraggingVolume ? "none" : "width 0.15s ease, height 0.15s ease, left 0.15s linear",
+                  pointerEvents: "none",
                 }} />
               </div>
               <span style={{
