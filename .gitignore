@@ -36,3 +36,8 @@ Desktop.ini
 .env
 .env.local
 .env.*.local
+
+# 分析文档
+AMLL深度分析.md
+流体背景分析.md
+项目结构分析.md
