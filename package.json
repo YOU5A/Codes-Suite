@@ -11,7 +11,7 @@
     },
     "keywords": [],
     "author": "Y0USA",
-    "license": "MIT",
+    "license": "AGPL-3.0",
     "type": "commonjs",
     "dependencies": {
         "framer-motion": "^12.40.0",
