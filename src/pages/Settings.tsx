@@ -8,6 +8,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { useTheme } from "@/hooks/useTheme";
 import { useConfirm } from "@/contexts/ConfirmContext";
 import { useToast } from "@/contexts/ToastContext";
+import { APP_VERSION } from "@/version";
 import GlassCard from "@/components/GlassCard";
 import { GlassButton, GlassInput, GlassModal, GlassSelect, GlassToggle, springDefault, space, fontSizes, radii } from "@/design-system";
 import { getAnimDuration, EASE_OUT } from "@/utils/animations";
@@ -53,7 +54,7 @@ const t: Record<Language, Record<string, string>> = {
     themeReset: "恢复默认",
     about: "关于",
     aboutTitle: "Codes Suite",
-    aboutVersion: "版本 1.3.0",
+    aboutVersion: `版本 ${APP_VERSION}`,
     aboutDesc: "统一 Windows 系统管理工具",
     aboutAuthor: "作者: Y0USA",
     aboutTech: "Electron + React + Python",
@@ -101,7 +102,7 @@ const t: Record<Language, Record<string, string>> = {
     themeReset: "Reset to Default",
     about: "About",
     aboutTitle: "Codes Suite",
-    aboutVersion: "Version 1.3.0",
+    aboutVersion: `Version ${APP_VERSION}`,
     aboutDesc: "Unified Windows System Management Tool",
     aboutAuthor: "Author: Y0USA",
     aboutTech: "Electron + React + Python",

@@ -6,6 +6,7 @@ import {
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useTheme } from "@/hooks/useTheme";
 import type { Page, Language } from "@/types";
+import { APP_VERSION } from "@/version";
 
 interface SidebarProps {
   currentPage: Page;
@@ -101,7 +102,7 @@ export default function Sidebar({ currentPage, onNavigate }: SidebarProps) {
           textAlign: "center",
         }}
       >
-        Codes Suite V1.3
+        `Codes Suite V${APP_VERSION}`
       </div>
     </GlassSurface>
   );
