@@ -11,7 +11,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-1.3.0-blue?style=for-the-badge" />
+  <img src="https://img.shields.io/badge/version-1.3.8-blue?style=for-the-badge" />
   <img src="https://img.shields.io/badge/Windows-11-0078D6?style=for-the-badge&logo=windows11" />
   <img src="https://img.shields.io/badge/Electron-42-47848F?style=for-the-badge&logo=electron" />
   <img src="https://img.shields.io/badge/React-19-61DAFB?style=for-the-badge&logo=react" />
