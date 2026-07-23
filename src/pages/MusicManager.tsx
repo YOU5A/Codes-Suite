@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import {
   FolderOpen, Search, Save, Image, X, Play, Pause, Settings,
@@ -708,14 +708,14 @@ export default function MusicManager({ onNavigate, fluidSettings: externalSettin
           onMouseEnter={() => setProgressHover(true)}
           onMouseLeave={() => setProgressHover(false)}
           style={{
-            width: "100%", height: progressHover || isDragging ? 6 : 4, borderRadius: 3,
+            width: "100%", height: progressHover || isDragging ? 6 : 4, borderRadius: radii.sm,
             background: "rgba(128,128,128,0.18)",
             cursor: "pointer", position: "relative",
             transition: "height 0.2s ease",
           }}
         >
           <div style={{
-            position: "absolute", top: 0, left: 0, height: "100%", borderRadius: 3,
+            position: "absolute", top: 0, left: 0, height: "100%", borderRadius: radii.sm,
             width: `${pct}%`,
             background: "var(--accent)",
             transition: isDragging ? "none" : "width 0.15s linear",
@@ -897,14 +897,14 @@ export default function MusicManager({ onNavigate, fluidSettings: externalSettin
                 onMouseEnter={() => setVolumeHover(true)}
                 onMouseLeave={() => setVolumeHover(false)}
                 style={{
-                  width: 80, height: volumeHover || isDraggingVolume ? 6 : 4, borderRadius: 3,
+                  width: 80, height: volumeHover || isDraggingVolume ? 6 : 4, borderRadius: radii.sm,
                   background: "rgba(128,128,128,0.18)",
                   cursor: "pointer", position: "relative",
                   transition: "height 0.2s ease",
                 }}
               >
                 <div style={{
-                  position: "absolute", top: 0, left: 0, height: "100%", borderRadius: 3,
+                  position: "absolute", top: 0, left: 0, height: "100%", borderRadius: radii.sm,
                   width: `${volume}%`,
                   background: "var(--accent)",
                   transition: isDraggingVolume ? "none" : "width 0.15s linear",

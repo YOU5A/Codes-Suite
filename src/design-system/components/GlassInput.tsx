@@ -28,7 +28,7 @@ const baseInputStyle: React.CSSProperties = {
   background: "var(--bg-tertiary)",
   color: "var(--text-primary)",
   border: "1px solid var(--border-color)",
-  borderRadius: radii.md,
+  borderRadius: radii.lg,
   padding: String(space[2]) + "px " + String(space[4]) + "px",
   fontSize: fontSizes.sm,
   outline: "none",

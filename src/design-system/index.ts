@@ -75,6 +75,7 @@ export {
   GlassBadge,
   GlassEmptyState,
   GlassGlow,
+  GlassPillButton,
 } from './components';
 export type {
   GlassSurfaceProps,
@@ -94,6 +95,7 @@ export type {
   BadgeVariant,
   GlassEmptyStateProps,
   GlassGlowProps,
+  GlassPillButtonProps,
 } from './components';
 
 /* ─── Layouts ─── */

@@ -59,7 +59,7 @@ export function GlassModal({
   const modalContent = (
     <AnimatePresence>
       {open && (
-        <motion.div
+        <motion.div key="modal"
           variants={noAnimation ? undefined : backdropVariants}
           initial={noAnimation ? undefined : "hidden"}
           animate={noAnimation ? undefined : "visible"}
@@ -75,7 +75,7 @@ export function GlassModal({
           }}
           onClick={disableBackdropClose ? undefined : onClose}
         >
-          <motion.div
+          <motion.div key="modal-content"
             variants={noAnimation ? undefined : glassPopIn}
             initial={noAnimation ? undefined : "hidden"}
             animate={noAnimation ? undefined : "visible"}

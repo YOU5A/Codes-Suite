@@ -26,16 +26,16 @@ export const space = {
 } as const;
 
 export const radii = {
-  /** 6px — small elements (badges, tags) */
-  sm: 6,
-  /** 10px — buttons, inputs, toggles */
-  md: 10,
-  /** 14px — cards */
-  lg: 14,
-  /** 16px — panels */
-  xl: 16,
-  /** 20px — root window, modals */
-  "2xl": 20,
+  /** 8px — small elements (badges, tags) */
+  sm: 8,
+  /** 14px — small surfaces, inputs, ultra-thin */
+  md: 14,
+  /** 18px — cards, buttons (sm), inputs */
+  lg: 18,
+  /** 22px — panels, buttons (md) */
+  xl: 22,
+  /** 26px — modals, buttons (lg), root window */
+  "2xl": 26,
   /** 9999px — pill / fully rounded */
   full: 9999,
 } as const;

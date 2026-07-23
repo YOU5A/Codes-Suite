@@ -1,4 +1,4 @@
-﻿/**
+/**
  * GlassButton - Liquid Glass Button
  *
  * Apple-style button with glass material support.
@@ -25,9 +25,9 @@ export interface GlassButtonProps extends Omit<HTMLMotionProps<"button">, "child
 }
 
 const sizeStyles: Record<ButtonSize, React.CSSProperties> = {
-  sm:  { padding: String(space[1]) + "px " + String(space[3]) + "px", fontSize: fontSizes.xs, borderRadius: 18 },
-  md:  { padding: String(space[2]) + "px " + String(space[4]) + "px", fontSize: fontSizes.sm, borderRadius: 20 },
-  lg:  { padding: String(space[3]) + "px " + String(space[5]) + "px", fontSize: fontSizes.md, borderRadius: 22 },
+  sm:  { padding: String(space[1]) + "px " + String(space[3]) + "px", fontSize: fontSizes.xs, borderRadius: radii.lg },
+  md:  { padding: String(space[2]) + "px " + String(space[4]) + "px", fontSize: fontSizes.sm, borderRadius: radii.xl },
+  lg:  { padding: String(space[3]) + "px " + String(space[5]) + "px", fontSize: fontSizes.md, borderRadius: radii["2xl"] },
 };
 
 function variantBase(variant: ButtonVariant): React.CSSProperties {
@@ -51,7 +51,7 @@ function hoverTarget(variant: ButtonVariant): TargetAndTransition | undefined {
     case "primary": return { background: "rgba(var(--accent-rgb), 0.4)", borderColor: "rgba(var(--accent-rgb), 0.55)", boxShadow: "0 0 24px rgba(var(--accent-rgb), 0.4), 0 0 8px rgba(var(--accent-rgb), 0.25)" };
     case "secondary": return { background: "var(--bg-elevated)", borderColor: "var(--accent)", boxShadow: "0 0 14px rgba(var(--accent-rgb), 0.15)" };
     case "danger": return { background: "rgba(var(--danger-rgb), 0.4)", borderColor: "rgba(var(--danger-rgb), 0.55)", boxShadow: "0 0 24px rgba(var(--danger-rgb), 0.4), 0 0 8px rgba(var(--danger-rgb), 0.25)" };
-    case "ghost": return { background: "var(--bg-tertiary)", color: "var(--text-primary)", borderRadius: 20 };
+    case "ghost": return { background: "var(--bg-tertiary)", color: "var(--text-primary)", borderRadius: radii.xl };
     case "input": return { borderColor: "var(--accent)", boxShadow: "0 0 0 3px var(--accent-bg)" };
     default: return undefined;
   }

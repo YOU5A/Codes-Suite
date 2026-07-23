@@ -39,3 +39,5 @@ export type { GlassEmptyStateProps } from "./GlassEmptyState";
 
 export { GlassGlow } from "./GlassGlow";
 export type { GlassGlowProps } from "./GlassGlow";
+export { GlassPillButton } from "./GlassPillButton";
+export type { GlassPillButtonProps } from "./GlassPillButton";

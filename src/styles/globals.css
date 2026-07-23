@@ -248,8 +248,8 @@ input[type="range"]::-webkit-slider-thumb:hover{transform:scale(1.15)}
 
 .glass-background {
   position: fixed;
-  inset: 0;
-  z-index: 0;
+  inset: -1.5px;
+  z-index: -1;
   pointer-events: none;
   transition: background 0.8s ease;
 }
@@ -402,12 +402,12 @@ input[type="range"]::-webkit-slider-thumb:hover{transform:scale(1.15)}
 /* Theme pill — white cursor-following glow (matches GlassButton) */
 .theme-pill {
   position: relative;
-  overflow: hidden;
-  transition: all var(--transition-fast) ease;
+  transition: background var(--transition-fast) ease, border-color var(--transition-fast) ease, color var(--transition-fast) ease, box-shadow var(--transition-fast) ease, opacity var(--transition-fast) ease;
 }
 .theme-pill-glow {
   position: absolute;
-  inset: 0;
+  inset: -1.5px;
+  z-index: -1;
   pointer-events: none;
   background: radial-gradient(240px circle at var(--pill-gx, 50%) var(--pill-gy, 50%), rgba(255,255,255,0.12), transparent 50%);
   opacity: var(--pill-go, 0);

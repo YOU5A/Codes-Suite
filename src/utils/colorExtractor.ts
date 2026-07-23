@@ -1,6 +1,6 @@
 /**
- * ????????????
- * ????????????????????????
+ * ???????????????
+ * ???????????
  */
 
 // --- ?? ---
@@ -51,16 +51,11 @@ export function hslToRgb([h, s, l]: HSL): RGB {
   return [Math.round(r * 255), Math.round(g * 255), Math.round(b * 255)];
 }
 
-// --- ??????? ---
+// --- ?????? ---
 
-/**
- * ? base64 ??? offscreen canvas ?????
- * ?????? + ??????????????
- */
 export function extractDominantColor(base64: string): RGB | null {
   try {
     const img = new Image();
-    // ???????????? Promise ???
     return null;
   } catch {
     return null;
@@ -68,52 +63,104 @@ export function extractDominantColor(base64: string): RGB | null {
 }
 
 /**
- * ??? base64 ???????
- * ????? + ?????????
+ * ? base64 ???????????
+ *
+ * ?????
+ * 1. ?????? ? ??????????/??
+ * 2. ???? ? ?????????????????
+ * 3. ????? ? ????????????
+ * 4. ???? ? ????/?????????????
  */
 export async function extractDominantColorAsync(base64: string): Promise<RGB | null> {
   return new Promise((resolve) => {
     const img = new Image();
     img.onload = () => {
       try {
+        const naturalW = img.naturalWidth;
+        const naturalH = img.naturalHeight;
+        if (naturalW === 0 || naturalH === 0) { resolve(null); return; }
+
         const canvas = document.createElement("canvas");
-        // ??? 50x50 ???
-        const size = 50;
-        canvas.width = size;
-        canvas.height = size;
+        const sampleSize = 80; // 80x80 ?????? 50x50 ???
+        canvas.width = sampleSize;
+        canvas.height = sampleSize;
         const ctx = canvas.getContext("2d");
         if (!ctx) { resolve(null); return; }
-        ctx.drawImage(img, 0, 0, size, size);
-        const data = ctx.getImageData(0, 0, size, size).data;
 
-        // ????? 16 ?
-        const quantize = 4; // 256 / 64 = 4 ??? (64^3 = 262k ?)
-        const colorMap = new Map<string, number>();
-        let maxCount = 0;
-        let dominantKey = "";
+        // ?????????????????????
+        const squareSize = Math.min(naturalW, naturalH);
+        const sx = Math.floor((naturalW - squareSize) / 2);
+        const sy = Math.floor((naturalH - squareSize) / 2);
 
-        for (let i = 0; i < data.length; i += 4) {
-          const r = Math.floor(data[i] / quantize) * quantize;
-          const g = Math.floor(data[i + 1] / quantize) * quantize;
-          const b_ = Math.floor(data[i + 2] / quantize) * quantize;
-          const a = data[i + 3];
-          // ????????/????
-          if (a < 128) continue;
-          const brightness = (r + g + b_) / 3;
-          if (brightness < 30 || brightness > 225) continue;
+        ctx.drawImage(
+          img,
+          sx, sy, squareSize, squareSize,  // ?????????
+          0, 0, sampleSize, sampleSize,     // ????
+        );
 
-          const key = `${r},${g},${b_}`;
-          const count = (colorMap.get(key) || 0) + 1;
-          colorMap.set(key, count);
-          if (count > maxCount) {
-            maxCount = count;
-            dominantKey = key;
+        const data = ctx.getImageData(0, 0, sampleSize, sampleSize).data;
+        const half = sampleSize / 2;
+
+        // ?????key -> weighted count
+        const colorWeight = new Map<string, number>();
+        const quantize = 6; // ?????6 ??? 4 ??????????
+
+        for (let py = 0; py < sampleSize; py++) {
+          for (let px = 0; px < sampleSize; px++) {
+            const idx = (py * sampleSize + px) * 4;
+            const r = data[idx];
+            const g = data[idx + 1];
+            const b = data[idx + 2];
+            const a = data[idx + 3];
+
+            // ????
+            if (a < 128) continue;
+
+            // ????/???????????
+            const brightness = (r + g + b) / 3;
+            if (brightness < 20 || brightness > 235) continue;
+
+            // ?????????????????
+            const maxC = Math.max(r, g, b);
+            const minC = Math.min(r, g, b);
+            const saturation = maxC === 0 ? 0 : (maxC - minC) / maxC;
+            // ??????0.2 ? + 0.8????????????
+            const satWeight = 0.2 + saturation * 0.8;
+
+            // ????????????????
+            const dx = (px - half) / half;
+            const dy = (py - half) / half;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            // sigma=0.6: ?????1.0????0.25
+            const spatialWeight = Math.exp(-(dist * dist) / (2 * 0.6 * 0.6));
+
+            const weight = satWeight * spatialWeight;
+
+            // ????
+            const qr = Math.floor(r / quantize) * quantize;
+            const qg = Math.floor(g / quantize) * quantize;
+            const qb = Math.floor(b / quantize) * quantize;
+
+            const key = qr + "," + qg + "," + qb;
+            colorWeight.set(key, (colorWeight.get(key) || 0) + weight);
           }
         }
 
-        if (dominantKey) {
-          const [r, g, b_] = dominantKey.split(",").map(Number);
-          resolve([r, g, b_]);
+        if (colorWeight.size === 0) { resolve(null); return; }
+
+        // ?????????
+        let bestKey = "";
+        let bestWeight = 0;
+        for (const [key, w] of colorWeight) {
+          if (w > bestWeight) {
+            bestWeight = w;
+            bestKey = key;
+          }
+        }
+
+        if (bestKey) {
+          const [r, g, b] = bestKey.split(",").map(Number);
+          resolve([r, g, b]);
         } else {
           resolve(null);
         }
@@ -126,11 +173,10 @@ export async function extractDominantColorAsync(base64: string): Promise<RGB | n
   });
 }
 
-// --- ?????? ---
+// --- ????? ---
 
 /**
- * ??????????????
- * ?? 5 ? RGB ?? + ????
+ * ????? 5 ???? + ????
  */
 export function generateCoverPalette(dominant: RGB): {
   colors: RGB[];
@@ -138,7 +184,6 @@ export function generateCoverPalette(dominant: RGB): {
 } {
   const [h, s, l] = rgbToHsl(dominant);
 
-  // ??????? 5 ???? + ???
   const colors: RGB[] = [
     dominant,
     hslToRgb([(h + 0.05) % 1, Math.min(1, s * 1.1), Math.min(0.8, l * 1.15)]),
@@ -147,7 +192,6 @@ export function generateCoverPalette(dominant: RGB): {
     hslToRgb([(h + 0.45) % 1, Math.min(1, s * 0.6), Math.min(0.7, l * 0.9)]),
   ];
 
-  // ????????
   const background: RGB = hslToRgb([h, Math.min(1, s * 0.4), Math.max(0.04, l * 0.15)]);
 
   return { colors, background };

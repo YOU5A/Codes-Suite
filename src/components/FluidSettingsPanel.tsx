@@ -4,7 +4,7 @@
  */
 
 import type { FC } from "react";
-import { GlassModal, GlassToggle, GlassButton, GlassSurface } from "@/design-system";
+import { GlassModal, GlassToggle, GlassButton, GlassSurface, GlassPillButton } from "@/design-system";
 import type { FluidPresetId } from "@/components/FluidBackground/config";
 import { useLanguage } from "@/contexts/LanguageContext";
 import type { Language } from "@/types";
@@ -150,17 +150,6 @@ const FluidSettingsPanel: FC<FluidSettingsPanelProps> = ({ open, onClose, values
     onChange({ ...values, [key]: value });
   };
 
-  // Cursor-following white glow (same as GlassSelect)
-  const setPillGlow = (el: HTMLElement, cx: number, cy: number) => {
-    const r = el.getBoundingClientRect();
-    if (r.width === 0 || r.height === 0) return;
-    el.style.setProperty("--pill-gx", ((cx - r.left) / r.width) * 100 + "%");
-    el.style.setProperty("--pill-gy", ((cy - r.top) / r.height) * 100 + "%");
-    el.style.setProperty("--pill-go", "1");
-  };
-  const clearPillGlow = (el: HTMLElement) => {
-    el.style.setProperty("--pill-go", "0");
-  };
   const dim = values.enabled ? 1 : 0.35;
 
   return (
@@ -171,23 +160,13 @@ const FluidSettingsPanel: FC<FluidSettingsPanelProps> = ({ open, onClose, values
           <h3 style={{ fontSize: 17, fontWeight: 600, color: "var(--text-primary)", margin: 0 }}>
             {tx.title}
           </h3>
-          <button
+          <GlassPillButton
             onClick={() => onChange({ ...DEFAULT_FLUID_SETTINGS })}
-            style={{
-              padding: "3px 12px",
-              borderRadius: 14,
-              border: "1px solid var(--border-color)",
-              background: "transparent",
-              color: "var(--text-secondary)",
-              fontSize: 11,
-              fontWeight: 500,
-              cursor: "pointer",
-              transition: "all var(--transition-fast)",
-            }}
+            style={{ padding: "3px 12px", borderRadius: 14, border: "1px solid var(--border-color)", fontSize: 11, fontWeight: 500 }}
             title={tx.resetTitle}
           >
             {tx.reset}
-          </button>
+          </GlassPillButton>
         </div>
 
 
@@ -236,33 +215,14 @@ const FluidSettingsPanel: FC<FluidSettingsPanelProps> = ({ open, onClose, values
           </div>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
             {COLOR_MODE_OPTIONS.map((opt) => (
-              <button
+              <GlassPillButton
                 key={opt.id}
-                className="theme-pill"
-                onClick={() => set("colorMode", opt.id)}
+                active={values.colorMode === opt.id}
                 disabled={!values.enabled}
-                onMouseMove={(e) => setPillGlow(e.currentTarget, e.clientX, e.clientY)}
-                onMouseEnter={(e) => setPillGlow(e.currentTarget, e.clientX, e.clientY)}
-                onMouseLeave={(e) => clearPillGlow(e.currentTarget)}
-                style={{
-                  padding: "5px 12px",
-                  borderRadius: 20,
-                  border: `1.5px solid ${values.colorMode === opt.id ? "var(--accent)" : "var(--border-color)"}`,
-                  background: values.colorMode === opt.id ? "var(--accent-bg)" : "transparent",
-                  color: values.colorMode === opt.id ? "var(--accent)" : "var(--text-secondary)",
-                  fontSize: 12,
-                  fontWeight: values.colorMode === opt.id ? 600 : 400,
-                  cursor: values.enabled ? "pointer" : "not-allowed",
-                  opacity: values.enabled ? 1 : 0.4,
-                  transition: "all var(--transition-fast)",
-                  boxShadow: values.colorMode === opt.id ? "0 0 12px rgba(255,255,255,0.25), 0 0 4px rgba(255,255,255,0.15)" : "none",
-                  fontFamily: "inherit",
-                  outline: "none",
-                }}
+                onClick={() => set("colorMode", opt.id)}
               >
                 {opt.label[lang]}
-                <span className="theme-pill-glow" />
-              </button>
+              </GlassPillButton>
             ))}
           </div>
         </div><div style={separatorStyle} />
@@ -274,33 +234,14 @@ const FluidSettingsPanel: FC<FluidSettingsPanelProps> = ({ open, onClose, values
           </div>
           <div style={{ display: "flex", gap: 4, alignItems: "center" }}>
             {([30, 60] as const).map((fps) => (
-              <button
+              <GlassPillButton
                 key={fps}
-                className="theme-pill"
-                onClick={() => set("fps", fps)}
+                active={values.fps === fps}
                 disabled={!values.enabled}
-                onMouseMove={(e) => setPillGlow(e.currentTarget, e.clientX, e.clientY)}
-                onMouseEnter={(e) => setPillGlow(e.currentTarget, e.clientX, e.clientY)}
-                onMouseLeave={(e) => clearPillGlow(e.currentTarget)}
-                style={{
-                  padding: "3px 14px",
-                  borderRadius: 16,
-                  border: `1.5px solid ${values.fps === fps ? "var(--accent)" : "var(--border-color)"}`,
-                  background: values.fps === fps ? "var(--accent-bg)" : "transparent",
-                  color: values.fps === fps ? "var(--accent)" : "var(--text-secondary)",
-                  fontSize: 12,
-                  fontWeight: values.fps === fps ? 600 : 400,
-                  cursor: values.enabled ? "pointer" : "not-allowed",
-                  opacity: values.enabled ? 1 : 0.4,
-                  transition: "all var(--transition-fast)",
-                  boxShadow: values.fps === fps ? "0 0 12px rgba(255,255,255,0.25), 0 0 4px rgba(255,255,255,0.15)" : "none",
-                  fontFamily: "inherit",
-                  outline: "none",
-                }}
+                onClick={() => set("fps", fps)}
               >
                 {fps} FPS
-                <span className="theme-pill-glow" />
-              </button>
+              </GlassPillButton>
             ))}
           </div>
         </div>
@@ -371,33 +312,14 @@ const FluidSettingsPanel: FC<FluidSettingsPanelProps> = ({ open, onClose, values
           </div>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
             {STYLE_OPTIONS.map((opt) => (
-              <button
+              <GlassPillButton
                 key={opt.id}
-                className="theme-pill"
-                onClick={() => set("style", opt.id)}
+                active={values.style === opt.id}
                 disabled={!values.enabled}
-                onMouseMove={(e) => setPillGlow(e.currentTarget, e.clientX, e.clientY)}
-                onMouseEnter={(e) => setPillGlow(e.currentTarget, e.clientX, e.clientY)}
-                onMouseLeave={(e) => clearPillGlow(e.currentTarget)}
-                style={{
-                  padding: "5px 12px",
-                  borderRadius: 20,
-                  border: `1.5px solid ${values.style === opt.id ? "var(--accent)" : "var(--border-color)"}`,
-                  background: values.style === opt.id ? "var(--accent-bg)" : "transparent",
-                  color: values.style === opt.id ? "var(--accent)" : "var(--text-secondary)",
-                  fontSize: 12,
-                  fontWeight: values.style === opt.id ? 600 : 400,
-                  cursor: values.enabled ? "pointer" : "not-allowed",
-                  opacity: values.enabled ? 1 : 0.4,
-                  transition: "all var(--transition-fast)",
-                  boxShadow: values.style === opt.id ? "0 0 12px rgba(255,255,255,0.25), 0 0 4px rgba(255,255,255,0.15)" : "none",
-                  fontFamily: "inherit",
-                  outline: "none",
-                }}
+                onClick={() => set("style", opt.id)}
               >
                 {opt.label[lang]}
-                <span className="theme-pill-glow" />
-              </button>
+              </GlassPillButton>
             ))}
           </div>
         </div>

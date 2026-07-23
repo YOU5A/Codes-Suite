@@ -14,6 +14,7 @@ import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import type { Transition } from "framer-motion";
 import { ChevronDown, RotateCcw } from "lucide-react";
+import { GlassPillButton } from "./GlassPillButton";
 import { space, radii, fontSizes, zLayers } from "../tokens";
 import { useTheme } from "@/hooks/useTheme";
 
@@ -99,19 +100,6 @@ export function GlassSelect({
   const selectedLabel =
     options.find((o) => o.value === value)?.label ?? placeholder;
 
-  // ── Cursor-following white glow ──
-  const setPillGlow = useCallback((el: HTMLElement, cx: number, cy: number) => {
-    const r = el.getBoundingClientRect();
-    if (r.width === 0 || r.height === 0) return;
-    el.style.setProperty("--pill-gx", ((cx - r.left) / r.width) * 100 + "%");
-    el.style.setProperty("--pill-gy", ((cy - r.top) / r.height) * 100 + "%");
-    el.style.setProperty("--pill-go", "1");
-  }, []);
-
-  const clearPillGlow = useCallback((el: HTMLElement) => {
-    el.style.setProperty("--pill-go", "0");
-  }, []);
-
   /* ── Trigger — pill-shaped ── */
   const triggerStyle: React.CSSProperties = {
     display: "inline-flex",
@@ -131,7 +119,7 @@ export function GlassSelect({
     userSelect: "none",
     backdropFilter: "blur(15px)",
     WebkitBackdropFilter: "blur(15px)",
-    transition: "all var(--transition-fast) ease",
+    transition: "all var(--transition-fast)",
     opacity: disabled ? 0.5 : 1,
     boxShadow: open ? "0 0 0 3px var(--accent-bg)" : "none",
   };
@@ -202,37 +190,17 @@ export function GlassSelect({
         {options.map((opt) => {
           const active = opt.value === value;
           return (
-            <button
+            <GlassPillButton
               key={opt.value}
-              className="theme-pill"
+              active={active}
               onClick={() => {
                 onChange(opt.value);
                 setOpen(false);
               }}
-              onMouseMove={(e) => setPillGlow(e.currentTarget, e.clientX, e.clientY)}
-              onMouseEnter={(e) => setPillGlow(e.currentTarget, e.clientX, e.clientY)}
-              onMouseLeave={(e) => clearPillGlow(e.currentTarget)}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 6,
-                padding: "6px 14px",
-                borderRadius: 20,
-                border: `1.5px solid ${active ? "var(--accent)" : "var(--border-color)"}`,
-                background: active ? "var(--accent-bg)" : "transparent",
-                color: active ? "var(--accent)" : "var(--text-secondary)",
-                fontSize: 12,
-                fontWeight: active ? 600 : 400,
-                cursor: "pointer",
-                transition: "all var(--transition-fast) ease",
-                lineHeight: 1,
-                fontFamily: "inherit",
-                outline: "none",
-              }}
+              style={{ display: "flex", alignItems: "center", gap: 6 }}
             >
               {opt.label}
-              <span className="theme-pill-glow" />
-            </button>
+            </GlassPillButton>
           );
         })}
       </div>
@@ -241,15 +209,11 @@ export function GlassSelect({
       {onReset && (
         <>
           <div style={separatorStyle} />
-          <button
-            className="theme-pill"
+          <GlassPillButton
             onClick={() => {
               onReset();
               setOpen(false);
             }}
-            onMouseMove={(e) => setPillGlow(e.currentTarget, e.clientX, e.clientY)}
-            onMouseEnter={(e) => setPillGlow(e.currentTarget, e.clientX, e.clientY)}
-            onMouseLeave={(e) => clearPillGlow(e.currentTarget)}
             style={{
               display: "flex",
               alignItems: "center",
@@ -258,21 +222,13 @@ export function GlassSelect({
               width: "100%",
               padding: "6px 0",
               borderRadius: 16,
-              border: "1.5px solid var(--border-color)",
-              background: "transparent",
-              color: "var(--text-tertiary)",
               fontSize: 11,
               fontWeight: 500,
-              cursor: "pointer",
-              transition: "all var(--transition-fast) ease",
-              fontFamily: "inherit",
-              outline: "none",
             }}
           >
             <RotateCcw size={11} />
             {resetLabel || "Reset"}
-            <span className="theme-pill-glow" />
-          </button>
+          </GlassPillButton>
         </>
       )}
     </motion.div>
