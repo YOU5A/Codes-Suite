@@ -216,7 +216,7 @@ font-size:14px;line-height:1.5;color:var(--text-primary);background:transparent;
 .app-background{position:fixed;inset:0;z-index:0;background-image:var(--bg-image);
 background-size:var(--bg-image-fit);background-repeat:var(--bg-image-repeat,no-repeat);background-position:center;
 opacity:var(--bg-image-opacity);filter:var(--bg-image-filter,none);pointer-events:none}
-.app-root-backdrop{position:relative;height:100%;border-radius:var(--radius);backdrop-filter:blur(30px);-webkit-backdrop-filter:blur(30px);border:1px solid var(--border-color);box-shadow:inset 0 0 0 1px var(--border-strong)}
+.app-root-backdrop{position:relative;height:100%;overflow:hidden;border-radius:var(--radius);backdrop-filter:blur(30px);-webkit-backdrop-filter:blur(30px);border:1px solid var(--border-color);box-shadow:inset 0 0 0 1px var(--border-strong)}
 .app-root-backdrop.has-bg-image{background:transparent!important;box-shadow:none}
 .app-root{position:relative;height:100%;display:flex;flex-direction:column;border-radius:var(--radius);overflow:hidden;background:transparent}
 

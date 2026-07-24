@@ -15,6 +15,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { useConfirm } from "@/contexts/ConfirmContext";
 import type { BackupEntry } from "@/types";
 import { useTheme } from "@/hooks/useTheme";
+import PageLayout from "@/components/PageLayout";
 import { getAnimDuration, EASE_OUT } from "@/utils/animations";
 
 
@@ -31,6 +32,7 @@ interface Props {}
 const t = {
   zh: {
     title: "备份中心",
+    subtitle: "管理注册表备份文件，支持恢复与导出",
     openDir: "打开备份目录",
     restore: "恢复",
     delete: "删除",
@@ -48,6 +50,7 @@ const t = {
   },
   en: {
     title: "Backup Center",
+    subtitle: "Manage registry backup files — restore, export, and delete",
     openDir: "Open Backup Folder",
     restore: "Restore",
     delete: "Delete",
@@ -123,34 +126,14 @@ export default function BackupCenter(_props: Props) {
     }
   };
   const { settings } = useTheme();
-  const animationDuration = getAnimDuration(settings.animationSpeed);
 
 
   return (
-    <motion.div
-      animate={{ opacity: 1 }}
-      transition={{ duration: animationDuration, ease: EASE_OUT }}
-      style={{ height: "100%", display: "flex", flexDirection: "column", width: "100%" }}
-    >
-      {/* Title + Toolbar */}
-      <div style={{
-        display: "flex", justifyContent: "space-between", alignItems: "center",
-        marginBottom: space[6], flexShrink: 0,
-      }}>
-        <div style={{ display: "flex", alignItems: "center", gap: space[2] }}>
-          <h1 style={{ fontSize: fontSizes["2xl"], fontWeight: 600, color: "var(--text-primary)", margin: 0 }}>
-            {tx.title}
-          </h1>
-          {backups.length > 0 && (
-            <GlassBadge variant="accent" size="sm">{backups.length}</GlassBadge>
-          )}
-        </div>
-        <GlassButton variant="secondary" size="md" onClick={openBackupDir}>
-          <FolderOpen size={14} /> {tx.openDir}
-        </GlassButton>
-      </div>
-
-      {/* Loading */}
+    <PageLayout title={tx.title} subtitle={tx.subtitle} actions={
+      <GlassButton variant="secondary" size="sm" onClick={openBackupDir}>
+        <FolderOpen size={14} /> {tx.openDir}
+      </GlassButton>
+    }>
       {loading ? (
         <GlassCard style={{ display: "flex", alignItems: "center", justifyContent: "center", padding: space[8] }}>
           <div style={{
@@ -161,14 +144,14 @@ export default function BackupCenter(_props: Props) {
           }} />
         </GlassCard>
       ) : backups.length === 0 ? (
-        /* Empty State */
-        <GlassEmptyState
-          icon={<FolderOpen size={48} />}
-          title={tx.noBackups}
-        />
+        <GlassCard style={{ padding: `${space[12]}px ${space[6]}px`, textAlign: "center" }}>
+          <GlassEmptyState
+            icon={<FolderOpen size={48} />}
+            title={tx.noBackups}
+          />
+        </GlassCard>
       ) : (
-        /* Backup List */
-        <div className="scroll-fade-edge" style={{ display: "flex", flexDirection: "column", gap: space[3], flex: 1, overflowY: "auto", minHeight: 0, paddingTop: space[5], paddingBottom: space[5] }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: space[3] }}>
           {backups.map((bp) => (
             <GlassCard
               key={bp.filename}
@@ -216,6 +199,6 @@ export default function BackupCenter(_props: Props) {
           ))}
         </div>
       )}
-    </motion.div>
+    </PageLayout>
   );
 }

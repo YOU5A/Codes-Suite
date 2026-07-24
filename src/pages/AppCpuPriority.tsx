@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { Plus, Pencil, Trash2, RefreshCw, Upload, Download } from "lucide-react";
 import GlassCard from "@/components/GlassCard";
 import { GlassButton, GlassInput, GlassModal, GlassSelect, GlassToggle, GlassBadge, GlassEmptyState, space, radii, fontSizes } from "@/design-system";
+import PageLayout from "@/components/PageLayout";
 import type { SelectOption } from "@/design-system";
 import { useToast } from "@/contexts/ToastContext";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -239,34 +240,23 @@ export default function AppCpuPriority(_props: Props) {
 
 
   return (
-    <motion.div
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -12 }}
-      transition={{ duration: animationDuration, ease: EASE_OUT }}
-    >
-      {/* Header */}
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: space[5] }}>
-        <div>
-          <h2 style={{ fontSize: fontSizes["2xl"], fontWeight: 600, color: "var(--text-primary)", margin: 0 }}>{tx.title}</h2>
-          <p style={{ fontSize: fontSizes.sm, color: "var(--text-tertiary)", margin: `${space[1]}px 0 0` }}>{tx.subtitle}</p>
-        </div>
-        <div style={{ display: "flex", gap: space[2] }}>
-          <GlassButton variant="primary" onClick={() => openDialog()} style={{ padding: `${space[2]}px ${space[4]}px`, fontSize: fontSizes.md }}>
-            <Plus size={14} /> {tx.add}
-          </GlassButton>
-          <GlassButton variant="secondary" onClick={fetchRules} style={{ padding: `${space[2]}px ${space[3]}px`, fontSize: fontSizes.md }}>
-            <RefreshCw size={14} />
-          </GlassButton>
-          <GlassButton variant="secondary" onClick={exportConfig} style={{ padding: `${space[2]}px ${space[4]}px`, fontSize: fontSizes.md }}>
-            <Download size={14} /> {tx.export}
-          </GlassButton>
-          <GlassButton variant="secondary" onClick={importConfig} style={{ padding: `${space[2]}px ${space[4]}px`, fontSize: fontSizes.md }}>
-            <Upload size={14} /> {tx.import}
-          </GlassButton>
-        </div>
-      </div>
-
-      {/* Table */}
+    <>
+      <PageLayout title={tx.title} subtitle={tx.subtitle} actions={
+      <>
+        <GlassButton variant="primary" onClick={() => openDialog()} style={{ padding: `${space[2]}px ${space[4]}px`, fontSize: fontSizes.md }}>
+          <Plus size={14} /> {tx.add}
+        </GlassButton>
+        <GlassButton variant="secondary" onClick={fetchRules} style={{ padding: `${space[2]}px ${space[3]}px`, fontSize: fontSizes.md }}>
+          <RefreshCw size={14} />
+        </GlassButton>
+        <GlassButton variant="secondary" onClick={exportConfig} style={{ padding: `${space[2]}px ${space[4]}px`, fontSize: fontSizes.md }}>
+          <Download size={14} /> {tx.export}
+        </GlassButton>
+        <GlassButton variant="secondary" onClick={importConfig} style={{ padding: `${space[2]}px ${space[4]}px`, fontSize: fontSizes.md }}>
+          <Upload size={14} /> {tx.import}
+        </GlassButton>
+      </>
+    }>
       {rules.length === 0 ? (
         <GlassCard style={{ padding: `${space[12]}px ${space[6]}px`, textAlign: "center" }}>
           <motion.div initial={{ opacity: 0.3 }} animate={{ opacity: 1 }} transition={{ duration: animationDuration, ease: EASE_OUT }} />
@@ -303,10 +293,10 @@ export default function AppCpuPriority(_props: Props) {
           </table>
         </GlassCard>
       )}
+    </PageLayout>
 
-      {/* Dialog */}
+      {/* Dialog — portal-rendered, outside PageLayout to avoid scroll clipping */}
       <GlassModal open={showDialog} onClose={() => setShowDialog(false)} maxWidth={420}>
-        {/* Title */}
         <h3 style={{
           fontSize: fontSizes.xl, fontWeight: 600,
           color: "var(--text-primary)",
@@ -316,9 +306,7 @@ export default function AppCpuPriority(_props: Props) {
           {editTarget ? tx.editDialog : tx.addDialog}
         </h3>
 
-        {/* Form fields */}
         <div style={{ display: "flex", flexDirection: "column", gap: space[4] }}>
-          {/* App name */}
           <div>
             <label style={{
               fontSize: 11, fontWeight: 500,
@@ -334,7 +322,6 @@ export default function AppCpuPriority(_props: Props) {
             />
           </div>
 
-          {/* CPU Priority */}
           <div>
             <label style={{
               fontSize: 11, fontWeight: 500,
@@ -350,7 +337,6 @@ export default function AppCpuPriority(_props: Props) {
             />
           </div>
 
-          {/* I/O Priority toggle */}
           <div>
             <div style={{
               display: "flex", alignItems: "center", gap: 8,
@@ -372,7 +358,6 @@ export default function AppCpuPriority(_props: Props) {
           </div>
         </div>
 
-        {/* Actions */}
         <div style={{
           display: "flex", justifyContent: "flex-end", gap: space[3],
         }}>
@@ -390,6 +375,6 @@ export default function AppCpuPriority(_props: Props) {
           >{tx.save}</GlassButton>
         </div>
       </GlassModal>
-    </motion.div>
+    </>
   );
 }

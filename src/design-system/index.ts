@@ -77,6 +77,7 @@ export {
   GlassGlow,
   GlassPillButton,
   GlassFloat,
+  GlassTooltip,
 } from './components';
 export type {
   GlassSurfaceProps,

@@ -1,5 +1,7 @@
 ﻿import React, { createContext, useContext, useState, useRef, useEffect, useCallback } from "react";
 
+export type PlayMode = "sequential" | "loop-all" | "shuffle" | "stop-after";
+
 interface AudioState {
   duration: number;
   playing: boolean;
@@ -10,12 +12,18 @@ interface MusicPlayerContextValue {
   audioState: AudioState;
   playingFile: string;
   volume: number;
+  playMode: PlayMode;
+  playlist: string[];
   playFile: (fp: string) => void;
   toggle: (currentSelectedFile?: string) => void;
   stop: () => void;
   seek: (clientX: number, progressRef: React.RefObject<HTMLDivElement | null>) => void;
   seekTo: (seconds: number) => void;
   setVolume: (v: number) => void;
+  setPlaylist: (files: string[]) => void;
+  setPlayMode: (mode: PlayMode) => void;
+  playNext: () => void;
+  playPrev: () => void;
   fmtTime: (ms: number) => string;
 }
 
@@ -23,17 +31,32 @@ const MusicPlayerContext = createContext<MusicPlayerContextValue>({
   audioState: { duration: 0, playing: false, pos: 0 },
   playingFile: "",
   volume: 40,
+  playMode: "sequential",
+  playlist: [],
   playFile: () => {},
   toggle: () => {},
   stop: () => {},
   seek: () => {},
   seekTo: () => {},
   setVolume: () => {},
+  setPlaylist: () => {},
+  setPlayMode: () => {},
+  playNext: () => {},
+  playPrev: () => {},
   fmtTime: () => "0:00",
 });
 
 export function useMusicPlayer() {
   return useContext(MusicPlayerContext);
+}
+
+function shuffleArray<T>(arr: T[]): T[] {
+  const result = [...arr];
+  for (let i = result.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [result[i], result[j]] = [result[j], result[i]];
+  }
+  return result;
 }
 
 export function MusicPlayerProvider({ children }: { children: React.ReactNode }) {
@@ -45,6 +68,30 @@ export function MusicPlayerProvider({ children }: { children: React.ReactNode })
   });
   const [playingFile, setPlayingFile] = useState("");
   const isStoppingRef = useRef(false);
+
+  // Play mode & playlist
+  const [playMode, setPlayModeState] = useState<PlayMode>(() => {
+    try {
+      const saved = localStorage.getItem("music_playmode");
+      return (saved as PlayMode) || "sequential";
+    } catch {
+      return "sequential";
+    }
+  });
+  const [playlist, setPlaylistState] = useState<string[]>([]);
+  const [shuffleOrder, setShuffleOrder] = useState<number[]>([]);
+
+  // Refs for onEnd handler to always read latest values
+  const playModeRef = useRef(playMode);
+  const playlistRef = useRef(playlist);
+  const shuffleOrderRef = useRef(shuffleOrder);
+  const playingFileRef = useRef(playingFile);
+
+  useEffect(() => { playModeRef.current = playMode; }, [playMode]);
+  useEffect(() => { playlistRef.current = playlist; }, [playlist]);
+  useEffect(() => { shuffleOrderRef.current = shuffleOrder; }, [shuffleOrder]);
+  useEffect(() => { playingFileRef.current = playingFile; }, [playingFile]);
+
   const [volume, setVolumeState] = useState(() => {
     try {
       const saved = localStorage.getItem("music_volume");
@@ -68,7 +115,38 @@ export function MusicPlayerProvider({ children }: { children: React.ReactNode })
     const onTime = () => setAudioState(prev => ({ ...prev, pos: audio.currentTime }));
     const onPlay = () => setAudioState(prev => ({ ...prev, playing: true }));
     const onPause = () => setAudioState(prev => ({ ...prev, playing: false }));
-    const onEnd = () => setAudioState(prev => ({ ...prev, playing: false, pos: 0 }));
+    const onEnd = () => {
+      setAudioState(prev => ({ ...prev, playing: false, pos: 0 }));
+      // Auto-advance based on play mode
+      const mode = playModeRef.current;
+      const list = playlistRef.current;
+      const shuff = shuffleOrderRef.current;
+      const current = playingFileRef.current;
+
+      if (mode === "stop-after") return;
+      if (list.length === 0) return;
+
+      const idx = list.indexOf(current);
+      let nextIdx: number;
+
+      if (mode === "shuffle" && shuff.length > 0) {
+        const shuffIdx = shuff.indexOf(idx);
+        const nextShuffIdx = (shuffIdx + 1) % shuff.length;
+        nextIdx = shuff[nextShuffIdx];
+      } else {
+        // sequential or loop-all: play next, wrap to start
+        nextIdx = idx >= 0 && idx < list.length - 1 ? idx + 1 : 0;
+      }
+
+      const nextFile = list[nextIdx];
+      if (nextFile) {
+        setPlayingFile(nextFile);
+        playingFileRef.current = nextFile;
+        audio.src = window.electronAPI?.python.getFileUrl(nextFile) ?? "";
+        audio.play().catch(e => console.error("[Audio] Auto-next failed:", e));
+        setAudioState(prev => ({ ...prev, pos: 0 }));
+      }
+    };
     const onErr = () => {
       if (isStoppingRef.current) {
         isStoppingRef.current = false;
@@ -105,10 +183,30 @@ export function MusicPlayerProvider({ children }: { children: React.ReactNode })
     if (audioRef.current) audioRef.current.volume = volume / 100;
   }, [volume]);
 
+  const setPlaylist = useCallback((files: string[]) => {
+    setPlaylistState(files);
+    playlistRef.current = files;
+    if (files.length > 0) {
+      const newOrder = shuffleArray(files.map((_, i) => i));
+      setShuffleOrder(newOrder);
+      shuffleOrderRef.current = newOrder;
+    } else {
+      setShuffleOrder([]);
+      shuffleOrderRef.current = [];
+    }
+  }, []);
+
+  const setPlayMode = useCallback((mode: PlayMode) => {
+    setPlayModeState(mode);
+    playModeRef.current = mode;
+    localStorage.setItem("music_playmode", mode);
+  }, []);
+
   const playFile = useCallback((fp: string) => {
     const audio = audioRef.current;
     if (!fp || !audio) return;
     setPlayingFile(fp);
+    playingFileRef.current = fp;
     audio.src = window.electronAPI?.python.getFileUrl(fp) ?? "";
     audio.play().catch(e => console.error("[Audio] Play failed:", e));
     setAudioState(prev => ({ ...prev, pos: 0 }));
@@ -139,7 +237,52 @@ export function MusicPlayerProvider({ children }: { children: React.ReactNode })
     audio.src = "";
     setAudioState({ duration: 0, playing: false, pos: 0 });
     setPlayingFile("");
+    playingFileRef.current = "";
   }, []);
+
+  const playNext = useCallback(() => {
+    const list = playlistRef.current;
+    const mode = playModeRef.current;
+    const shuff = shuffleOrderRef.current;
+    const current = playingFileRef.current;
+
+    if (list.length === 0) return;
+    const idx = list.indexOf(current);
+    let nextIdx: number;
+
+    if (mode === "shuffle" && shuff.length > 0) {
+      const shuffIdx = idx >= 0 ? shuff.indexOf(idx) : -1;
+      const nextShuffIdx = shuffIdx >= 0 ? (shuffIdx + 1) % shuff.length : 0;
+      nextIdx = shuff[nextShuffIdx];
+    } else {
+      nextIdx = idx >= 0 && idx < list.length - 1 ? idx + 1 : 0;
+    }
+
+    const nextFile = list[nextIdx];
+    if (nextFile) playFile(nextFile);
+  }, [playFile]);
+
+  const playPrev = useCallback(() => {
+    const list = playlistRef.current;
+    const mode = playModeRef.current;
+    const shuff = shuffleOrderRef.current;
+    const current = playingFileRef.current;
+
+    if (list.length === 0) return;
+    const idx = list.indexOf(current);
+    let prevIdx: number;
+
+    if (mode === "shuffle" && shuff.length > 0) {
+      const shuffIdx = idx >= 0 ? shuff.indexOf(idx) : -1;
+      const prevShuffIdx = shuffIdx > 0 ? shuffIdx - 1 : shuff.length - 1;
+      prevIdx = shuff[prevShuffIdx];
+    } else {
+      prevIdx = idx > 0 ? idx - 1 : list.length - 1;
+    }
+
+    const prevFile = list[prevIdx];
+    if (prevFile) playFile(prevFile);
+  }, [playFile]);
 
   const seek = useCallback((clientX: number, progressRef: React.RefObject<HTMLDivElement | null>) => {
     const audio = audioRef.current;
@@ -175,7 +318,11 @@ export function MusicPlayerProvider({ children }: { children: React.ReactNode })
 
   return (
     <MusicPlayerContext.Provider
-      value={{ audioState, playingFile, volume, playFile, toggle, stop, seek, seekTo, setVolume, fmtTime }}
+      value={{
+        audioState, playingFile, volume, playMode, playlist,
+        playFile, toggle, stop, seek, seekTo, setVolume,
+        setPlaylist, setPlayMode, playNext, playPrev, fmtTime,
+      }}
     >
       {children}
     </MusicPlayerContext.Provider>

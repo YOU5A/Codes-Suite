@@ -220,6 +220,21 @@ function setupIPC() {
     return true;
   });
 
+  ipcMain.handle("settings:resetBounds", () => {
+    electronSettings.windowBounds = null;
+    saveElectronSettings(electronSettings);
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      const defaultWidth = 1280;
+      const defaultHeight = 860;
+      if (mainWindow.isMaximized()) mainWindow.unmaximize();
+      mainWindow.setSize(defaultWidth, defaultHeight);
+      mainWindow.center();
+      console.log("[Settings] Window bounds reset to default:", defaultWidth, "x", defaultHeight);
+    }
+    return true;
+  });
+
+
   ipcMain.handle("settings:getAll", () => {
     return { ...electronSettings };
   });

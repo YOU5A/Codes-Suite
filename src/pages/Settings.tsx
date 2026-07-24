@@ -161,6 +161,7 @@ const panelStyle: React.CSSProperties = {
   border: "1px solid var(--border-color)",
   backdropFilter: "blur(24px) saturate(1.8)",
   WebkitBackdropFilter: "blur(24px) saturate(1.8)",
+  overflow: "hidden",
 };
 
 const labelStyle: React.CSSProperties = {
@@ -226,6 +227,9 @@ export default function Settings() {
     const ok = await confirm({ title: tx.resetConfirm, danger: true });
     if (!ok) return;
     resetSettings();
+    window.electronAPI?.settings.set("rememberSize", true);
+    window.electronAPI?.settings.set("rememberPosition", true);
+    window.electronAPI?.settings.resetBounds();
     showToast(tx.resetSuccess, "success");
   };
 

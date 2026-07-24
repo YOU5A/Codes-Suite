@@ -14,6 +14,8 @@ export interface UseLyricScrollerOptions {
   currentIndex: number;
   /** 行高基准（用于 spacer 计算），默认 64 */
   rowHeight?: number;
+  /** 歌曲标识，变化时重置滚动位置到顶部并退出手动模式 */
+  resetKey?: string | number;
 }
 
 export interface UseLyricScrollerReturn {
@@ -44,7 +46,7 @@ export interface UseLyricScrollerReturn {
 export function useLyricScroller(
   options: UseLyricScrollerOptions
 ): UseLyricScrollerReturn {
-  const { currentIndex, rowHeight = 64 } = options;
+  const { currentIndex, rowHeight = 64, resetKey } = options;
 
   // ── Refs ──
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -58,6 +60,27 @@ export function useLyricScroller(
 
   // Keep refs in sync
   currentIndexRef.current = currentIndex;
+
+  // ── Reset on song change ──
+  const prevResetKey = useRef(resetKey);
+  useEffect(() => {
+    if (resetKey !== undefined && resetKey !== prevResetKey.current) {
+      prevResetKey.current = resetKey;
+      // Exit manual mode
+      setIsManual(false);
+      isManualRef.current = false;
+      if (manualTimer.current) {
+        clearTimeout(manualTimer.current);
+        manualTimer.current = null;
+      }
+      // Reset scroll position to top
+      if (containerRef.current) {
+        containerRef.current.scrollTo({ top: 0, behavior: "auto" });
+      }
+      // Reset prevIndex so next auto-scroll is instant
+      prevIndexRef.current = -1;
+    }
+  }, [resetKey]);
 
   // ── State ──
   const [containerH, setContainerH] = useState(0);

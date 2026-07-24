@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import {
   FolderOpen, Search, Save, Image, X, Play, Pause, Settings,
-  SkipBack, SkipForward,
+  SkipBack, SkipForward, Repeat, Shuffle, StopCircle,
   Volume2, Trash2, Music, Edit3
 } from "lucide-react";
 import {
@@ -12,6 +12,7 @@ import {
   GlassSurface,
   GlassEmptyState,
   GlassBadge,
+  GlassTooltip,
   space,
   fontSizes,
   radii,
@@ -19,6 +20,7 @@ import {
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useToast } from "@/contexts/ToastContext";
 import { useConfirm } from "@/contexts/ConfirmContext";
+import type { PlayMode } from "@/contexts/MusicPlayerContext";
 import { useMusicPlayer } from "@/contexts/MusicPlayerContext";
 import { useLyricManager, LyricWindow, LyricDisplay } from "@/lyrics";
 import type { MusicMetadata, PlaybackState, Page } from "@/types";
@@ -72,6 +74,14 @@ const t = {
     removeCoverConfirm: "确定要删除所选文件的封面吗？",
     renameOneConfirm: "确定要重命名所选文件吗？",
     renameAllConfirm: "确定要按“标题 - 艺术家”格式重命名所有文件吗？",
+    modeSequential: "顺序播放",
+    modeLoopAll: "列表循环",
+    modeShuffle: "随机播放",
+    modeStopAfter: "播完停止",
+    prevTrack: "上一首",
+    nextTrack: "下一首",
+    playText: "播放",
+    pauseText: "暂停",
   },
   en: {
     title: "Music Manager",
@@ -116,6 +126,14 @@ const t = {
     removeCoverConfirm: "Remove cover artwork from the selected file?",
     renameOneConfirm: "Rename the selected file?",
     renameAllConfirm: "Rename all files using “Title - Artist” format?",
+    modeSequential: "Sequential",
+    modeLoopAll: "Loop All",
+    modeShuffle: "Shuffle",
+    modeStopAfter: "Stop After",
+    prevTrack: "Previous",
+    nextTrack: "Next",
+    playText: "Play",
+    pauseText: "Pause",
   },
 };
 
@@ -139,12 +157,12 @@ export default function MusicManager({ onNavigate, fluidSettings: externalSettin
   const [tagYear, setTagYear] = useState("");
   const [tagGenre, setTagGenre] = useState("");
   const [renameName, setRenameName] = useState("");
-
-  const { audioState, playingFile, volume, playFile: contextPlayFile, toggle: contextToggle, seek: contextSeek, seekTo, setVolume, fmtTime } = useMusicPlayer();
+  const { audioState, playingFile, volume, playMode, playlist, playFile: contextPlayFile, toggle: contextToggle, seek: contextSeek, seekTo, setVolume, setPlaylist, setPlayMode, playNext: contextPlayNext, playPrev: contextPlayPrev, fmtTime } = useMusicPlayer();
   const [saving, setSaving] = useState(false);
   const progressRef = useRef<HTMLDivElement | null>(null);
   const volumeRef = useRef<HTMLDivElement | null>(null);
   const listRef = useRef<HTMLDivElement | null>(null);
+  const toggleRef = useRef<() => void>(() => {});
   const hasScanned = useRef(false);
   const [isDragging, setIsDragging] = useState(false);
   const [isDraggingVolume, setIsDraggingVolume] = useState(false);
@@ -253,6 +271,7 @@ export default function MusicManager({ onNavigate, fluidSettings: externalSettin
     const r = await window.electronAPI?.python.call("music.scan", { folder: d });
     if (r && !r.error) {
       setFiles(r.files ?? []);
+      setPlaylist(r.files ?? []);
       showToast(tx.scanResult.replace("{n}", String(r.count ?? 0)), "info");
     }
   };
@@ -295,6 +314,27 @@ export default function MusicManager({ onNavigate, fluidSettings: externalSettin
     };
   }, [isDraggingVolume]);
 
+  // Sync selectedFile and metadata when playingFile changes (e.g., next/prev/auto-advance)
+  useEffect(() => {
+    if (playingFile && playingFile !== selectedFile) {
+      selectFile(playingFile);
+    }
+  }, [playingFile]);
+
+  // Keyboard shortcut: Space to toggle play/pause
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      // Ignore when typing in input fields
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+      if (e.code === "Space") {
+        e.preventDefault();
+        toggleRef.current();
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, []);
+
   const playFile = (fp: string) => {
     if (!fp) return;
     setSelectedFile(fp);
@@ -326,20 +366,13 @@ export default function MusicManager({ onNavigate, fluidSettings: externalSettin
     contextToggle(selectedFile);
   };
 
-  const playPrev = () => {
-    if (files.length === 0) return;
-    const currentFile = playingFile || selectedFile;
-    const idx = files.indexOf(currentFile);
-    const prev = idx > 0 ? files[idx - 1] : files[files.length - 1];
-    playFile(prev);
-  };
+  toggleRef.current = toggle;
 
+  const playPrev = () => {
+    contextPlayPrev();
+  };
   const playNext = () => {
-    if (files.length === 0) return;
-    const currentFile = playingFile || selectedFile;
-    const idx = files.indexOf(currentFile);
-    const next = idx < files.length - 1 ? files[idx + 1] : files[0];
-    playFile(next);
+    contextPlayNext();
   };
 
   const doSeek = (clientX: number) => {
@@ -692,7 +725,7 @@ export default function MusicManager({ onNavigate, fluidSettings: externalSettin
 
       {/* Player Bar ? Apple Music style */}
       <GlassSurface
-        tier="regular"
+        tier="thick"
         style={{
           flexShrink: 0,
           padding: `${space[3]}px ${space[5]}px ${space[4]}px`,
@@ -739,7 +772,7 @@ export default function MusicManager({ onNavigate, fluidSettings: externalSettin
           {/* Left: Cover + Track Info */}
           <div style={{
             display: "flex", alignItems: "center", gap: space[3],
-            flex: "0 1 260px", minWidth: 0,
+            flex: 1, minWidth: 0,
           }}>
             {/* Cover Thumbnail */}
             <div style={{
@@ -782,10 +815,10 @@ export default function MusicManager({ onNavigate, fluidSettings: externalSettin
           {/* Center: Playback Controls */}
           <div style={{
             display: "flex", alignItems: "center", justifyContent: "center", gap: space[4],
-            flex: 1,
-            paddingRight: 120,
+            flex: "0 0 auto",
           }}>
             {/* Lyrics Toggle */}
+            <GlassTooltip text={tx.lyrics}>
             <span style={{ width: 34, height: 34, display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
               <GlassButton
                 variant="ghost"
@@ -798,13 +831,15 @@ export default function MusicManager({ onNavigate, fluidSettings: externalSettin
                   color: lyricsVisible ? "var(--accent)" : "var(--text-tertiary)",
                   transition: "color 0.2s ease",
                 }}
-                title={tx.lyrics}
+
               >
                 {tx.lyrics}
               </GlassButton>
             </span>
+            </GlassTooltip>
 
             {/* Prev */}
+            <GlassTooltip text={tx.prevTrack}>
             <span style={{ width: 34, height: 34, display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
               <button
                 onClick={playPrev}
@@ -821,8 +856,10 @@ export default function MusicManager({ onNavigate, fluidSettings: externalSettin
                 <SkipBack size={16} fill="currentColor" />
               </button>
             </span>
+            </GlassTooltip>
 
             {/* Play/Pause */}
+            <GlassTooltip text={playback.is_playing ? tx.pauseText : tx.playText}>
             <span style={{ width: 34, height: 34, display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
               <motion.button
                 whileTap={{ scale: 0.95 }}
@@ -861,8 +898,10 @@ export default function MusicManager({ onNavigate, fluidSettings: externalSettin
                 }
               </motion.button>
             </span>
+            </GlassTooltip>
 
             {/* Next */}
+            <GlassTooltip text={tx.nextTrack}>
             <span style={{ width: 34, height: 34, display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
               <button
                 onClick={playNext}
@@ -879,12 +918,35 @@ export default function MusicManager({ onNavigate, fluidSettings: externalSettin
                 <SkipForward size={16} fill="currentColor" />
               </button>
             </span>
+            </GlassTooltip>
+            {/* Mode toggle */}
+            <GlassTooltip text={playMode === "sequential" ? tx.modeSequential : playMode === "loop-all" ? tx.modeLoopAll : playMode === "shuffle" ? tx.modeShuffle : tx.modeStopAfter}>
+            <span style={{ width: 34, height: 34, display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+              <GlassButton
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  const modes: PlayMode[] = ["loop-all", "shuffle", "stop-after"];
+                  const idx = modes.indexOf(playMode);
+                  setPlayMode(modes[(idx + 1) % modes.length]);
+                }}
+                style={{
+                  width: 34, height: 34, minWidth: 34, padding: 0,
+                  borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center",
+                  color: "var(--text-tertiary)",
+                  transition: "color 0.2s ease",
+                }}
+              >
+                {playMode === "shuffle" ? <Shuffle size={14} /> : playMode === "stop-after" ? <StopCircle size={14} /> : <Repeat size={14} />}
+              </GlassButton>
+            </span>
+            </GlassTooltip>
           </div>
 
           {/* Right: Volume + Time */}
           <div style={{
             display: "flex", alignItems: "center", gap: space[3],
-            flex: "0 0 auto",
+            flex: 1, justifyContent: "flex-end",
           }}>
             {/* Volume ? custom slider like progress bar */}
             <div style={{

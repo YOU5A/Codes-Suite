@@ -44,3 +44,5 @@ export type { GlassPillButtonProps } from "./GlassPillButton";
 
 export { GlassFloat } from "./GlassFloat";
 export type { GlassFloatProps } from "./GlassFloat";
+export { GlassTooltip } from "./GlassTooltip";
+export type { } from "./GlassTooltip";

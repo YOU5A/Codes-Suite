@@ -4,7 +4,7 @@
  * 滚动逻辑全部在 useLyricScroller hook 中，本组件只负责渲染。
  */
 
-import { useMemo } from "react";
+import { useRef, useMemo } from "react";
 import type { LyricData, LyricLine } from "./types";
 import { useLyricScroller } from "./useLyricScroller";
 
@@ -17,6 +17,8 @@ interface LyricDisplayProps {
   noLyricsText?: string;
   instrumentalText?: string;
   onLineClick?: (time: number) => void;
+  /** 歌曲标识，变化时重置滚动位置到顶部 */
+  songKey?: string;
 }
 
 const ROW_HEIGHT = 64;
@@ -25,6 +27,7 @@ export default function LyricDisplay({
   lyricData, currentTime, loading, error,
   loadingText, noLyricsText, instrumentalText,
   onLineClick,
+  songKey,
 }: LyricDisplayProps) {
   // ── Compute current line ──
   const { currentIndex, allLines } = useMemo(() => {
@@ -47,7 +50,10 @@ export default function LyricDisplay({
     spacerH,
     isManual,
     touchHandlers,
-  } = useLyricScroller({ currentIndex, rowHeight: ROW_HEIGHT });
+  } = useLyricScroller({ currentIndex, rowHeight: ROW_HEIGHT, resetKey: songKey });
+
+  // ── Click-vs-drag: 200ms threshold prevents seek during window drag ──
+  const pressStartTime = useRef(0);
 
   // ── Empty / loading states ──
   var cs = {
@@ -97,7 +103,29 @@ export default function LyricDisplay({
             key={i}
             ref={setRowRef(i)}
             data-lr={i}
-            onClick={onLineClick ? () => onLineClick(line.time) : undefined}
+            onMouseDown={onLineClick ? () => { pressStartTime.current = Date.now(); } : undefined}
+            onMouseUp={onLineClick ? () => {
+              if (Date.now() - pressStartTime.current < 200) {
+                onLineClick(line.time);
+              }
+            } : undefined}
+            onMouseMove={(e) => {
+              var el = e.currentTarget;
+              var r = el.getBoundingClientRect();
+              el.style.setProperty("--lx", ((e.clientX - r.left) / r.width * 100) + "%");
+              el.style.setProperty("--ly", ((e.clientY - r.top) / r.height * 100) + "%");
+              el.style.setProperty("--lo", "1");
+            }}
+            onMouseEnter={(e) => {
+              var el = e.currentTarget;
+              var r = el.getBoundingClientRect();
+              el.style.setProperty("--lx", ((e.clientX - r.left) / r.width * 100) + "%");
+              el.style.setProperty("--ly", ((e.clientY - r.top) / r.height * 100) + "%");
+              el.style.setProperty("--lo", "1");
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.setProperty("--lo", "0");
+            }}
             style={{
               minHeight: ROW_HEIGHT,
               display: "flex", alignItems: "center", justifyContent: "center",

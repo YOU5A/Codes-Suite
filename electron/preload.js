@@ -18,6 +18,7 @@ const api = {
     get: (key) => ipcRenderer.invoke("settings:get", key),
     set: (key, value) => ipcRenderer.invoke("settings:set", key, value),
     getAll: () => ipcRenderer.invoke("settings:getAll"),
+    resetBounds: () => ipcRenderer.invoke("settings:resetBounds"),
   },
   python: {
     // Convert local file path to playable URL via custom protocol
