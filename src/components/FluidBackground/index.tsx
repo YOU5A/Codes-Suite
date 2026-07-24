@@ -10,27 +10,27 @@ import type { FluidConfig, FluidPresetId } from "./config";
 import { DEFAULT_CONFIG, loadConfig } from "./config";
 
 export interface FluidBackgroundProps {
-  /** ????, ?? "auto" (????) */
+  /** 预设, 默认 "auto" (主题自适应) */
   preset?: FluidPresetId | "auto";
-  /** ???? 0-1, ?? 0.6 */
+  /** 整体不透明度 0-1, 默认 0.6 */
   intensity?: number;
-  /** ????, ?? "medium" */
+  /** 画质, 默认 "medium" */
   quality?: "low" | "medium" | "high";
-  /** ????????, ?? true */
+  /** 是否响应鼠标交互, 默认 true */
   interactive?: boolean;
-  /** ????, ?? true */
+  /** 总开关, 默认 true */
   enabled?: boolean;
-  /** ???? 0.1-3.0, ?? 1.0 */
+  /** 速度倍率 0.1-3.0, 默认 1.0 */
   speedMultiplier?: number;
-  /** ???? 0-1, ?? 0 */
+  /** 模糊程度 0-1, 默认 0 */
   blurAmount?: number;
-  /** ????, ?? "auto" */
+  /** 颜色模式, 默认 "auto" */
   colorMode?: "auto" | "cover" | "dynamic";
-  /** ????? RGB, ?? colorMode="cover" */
+  /** 封面颜色 RGB, 仅在 colorMode="cover" */
   coverColor?: [number, number, number] | null;
-  /** ?????? (30/60), ?? 60 */
+  /** 目标帧率 (30/60), 默认 60 */
   targetFps?: number;
-  /** ?? CSS ?? */
+  /** 额外 CSS 类名 */
   className?: string;
 }
 
@@ -134,12 +134,12 @@ const FluidBackground: FC<FluidBackgroundProps> = ({
     }
   }, [preset, intensity, quality, interactive, enabled, speedMultiplier, blurAmount, colorMode]);
 
-  // ??????
+  // 封面颜色
   useEffect(() => {
     rendererRef.current?.setCoverColor(coverColor ?? null);
   }, [coverColor]);
 
-  // FPS ??
+  // FPS 设置
   useEffect(() => {
     if (targetFps) {
       rendererRef.current?.setTargetFps(targetFps);
@@ -182,6 +182,7 @@ const FluidBackground: FC<FluidBackgroundProps> = ({
         zIndex: 0,
         pointerEvents: mergedConfig.interactive ? "auto" : "none",
         opacity: mergedConfig.intensity,
+        display: mergedConfig.enabled ? undefined : "none",
       }}
       onPointerMove={handlePointerMove}
       onClick={handleClick}

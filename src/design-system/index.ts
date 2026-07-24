@@ -1,5 +1,5 @@
-﻿/**
- * Codes-Suite Liquid Glass Design System
+/**
+ * CodeXa-Studio Liquid Glass Design System
  *
  * @module design-system
  *
@@ -76,6 +76,7 @@ export {
   GlassEmptyState,
   GlassGlow,
   GlassPillButton,
+  GlassFloat,
 } from './components';
 export type {
   GlassSurfaceProps,
@@ -96,6 +97,7 @@ export type {
   GlassEmptyStateProps,
   GlassGlowProps,
   GlassPillButtonProps,
+  GlassFloatProps,
 } from './components';
 
 /* ─── Layouts ─── */

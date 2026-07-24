@@ -190,7 +190,7 @@ export default function TitleBar({ isMaximized, onToggleMaximize }: TitleBarProp
         <span style={{
           fontSize: 13, fontWeight: 500, color: "var(--text-primary)", letterSpacing: "-0.01em",
         }}>
-          Codes Suite
+          CodeXa Studio
         </span>
       </div>
 

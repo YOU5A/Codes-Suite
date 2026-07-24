@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Liquid Glass Components
  *
  * @module design-system/components
@@ -41,3 +41,6 @@ export { GlassGlow } from "./GlassGlow";
 export type { GlassGlowProps } from "./GlassGlow";
 export { GlassPillButton } from "./GlassPillButton";
 export type { GlassPillButtonProps } from "./GlassPillButton";
+
+export { GlassFloat } from "./GlassFloat";
+export type { GlassFloatProps } from "./GlassFloat";

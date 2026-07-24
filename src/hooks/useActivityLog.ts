@@ -6,7 +6,7 @@ export interface ActivityEntry {
   description: string;
 }
 
-const ACTIVITY_KEY = "codes-suite-activity";
+const ACTIVITY_KEY = "codexa-studio-activity";
 const MAX_ENTRIES = 20;
 
 export function getActivities(): ActivityEntry[] {

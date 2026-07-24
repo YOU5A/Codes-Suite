@@ -54,7 +54,7 @@ export default function LyricDisplay({
     return () => ro.disconnect();
   }, []);
 
-  const spacerH = containerH / 2 - ROW_HEIGHT / 2;
+  const spacerH = containerH / 2 - ROW_HEIGHT * 1.5;
 
   const { currentIndex, lineProgress, allLines } = useMemo(() => {
     if (!lyricData?.lines?.length) {
@@ -176,8 +176,8 @@ export default function LyricDisplay({
       onTouchMove={handleTouchMove}
       style={{
         height: "100%", overflow: "hidden", position: "relative", touchAction: "none",
-        maskImage: "linear-gradient(to bottom, transparent 0%, black 8%, black 88%, transparent 100%)",
-        WebkitMaskImage: "linear-gradient(to bottom, transparent 0%, black 8%, black 88%, transparent 100%)",
+        maskImage: "linear-gradient(to bottom, transparent 0%, black 10%, black 90%, transparent 100%)",
+        WebkitMaskImage: "linear-gradient(to bottom, transparent 0%, black 10%, black 90%, transparent 100%)",
       }}
     >
       <div

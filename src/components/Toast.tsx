@@ -1,7 +1,8 @@
-﻿import { motion, AnimatePresence } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import { CheckCircle, XCircle, AlertTriangle, Info } from "lucide-react";
 import { useToast, type ToastType } from "@/contexts/ToastContext";
-import { glassEntrance, materialToStyle } from "@/design-system";
+import { GlassSurface, glassEntrance } from "@/design-system";
+import { useTheme } from "@/hooks/useTheme";
 
 const iconMap: Record<ToastType, React.ReactNode> = {
   success: <CheckCircle size={16} />,
@@ -17,56 +18,49 @@ const colorMap: Record<ToastType, string> = {
   info: "var(--accent)",
 };
 
-const mat = materialToStyle("elevated");
+const GAP = 8;
+const H = 42;
 
 export default function ToastContainer() {
   const { toasts } = useToast();
+  const { settings } = useTheme();
 
   return (
-    <div
-      style={{
-        position: "fixed",
-        top: 56,
-        right: 20,
-        zIndex: 9999,
-        display: "flex",
-        flexDirection: "column",
-        gap: 8,
-        pointerEvents: "none",
-      }}
-    >
-      <AnimatePresence>
-        {toasts.map((toast) => (
-          <motion.div
-            key={toast.id}
-            variants={glassEntrance}
-            initial="hidden"
-            animate={toast.exiting ? "exit" : "visible"}
+    <AnimatePresence>
+      {toasts.map((toast, i) => (
+        <motion.div
+          key={toast.id}
+          variants={glassEntrance}
+          initial="hidden"
+          animate={toast.exiting ? "exit" : "visible"}
+          style={{
+            position: "fixed",
+            top: 56 + i * (H + GAP),
+            right: 20,
+            zIndex: 9999,
+            minWidth: 240,
+            maxWidth: 400,
+          }}
+        >
+          <GlassSurface
+            tier="thick"
+            styleOverrides={{ radius: settings.borderRadius }}
             style={{
               display: "flex",
               alignItems: "center",
               gap: 10,
               padding: "10px 16px",
-              borderRadius: 12,
-              background: mat.background,
-              border: mat.border,
-              boxShadow: mat.boxShadow,
-              backdropFilter: mat.backdropFilter,
-              WebkitBackdropFilter: mat.backdropFilter,
-              minWidth: 240,
-              maxWidth: 400,
-              pointerEvents: "auto",
               fontSize: 13,
               color: "var(--text-primary)",
-            }}
+            } as React.CSSProperties}
           >
-            <span style={{ color: colorMap[toast.type], flexShrink: 0 }}>
+            <span style={{ color: colorMap[toast.type], flexShrink: 0, display: "flex" }}>
               {iconMap[toast.type]}
             </span>
             <span style={{ flex: 1, lineHeight: 1.4 }}>{toast.message}</span>
-          </motion.div>
-        ))}
-      </AnimatePresence>
-    </div>
+          </GlassSurface>
+        </motion.div>
+      ))}
+    </AnimatePresence>
   );
 }

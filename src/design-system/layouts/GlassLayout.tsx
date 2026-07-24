@@ -1,16 +1,5 @@
-﻿/**
- * GlassLayout — Root Application Shell
- *
- * The outermost layout container that establishes:
- * - FluidBackground layer (Canvas 2D blob fluid)
- * - Background layer (gradient mesh + animated light)
- * - Content area with backdrop blur and border
- * - Proper z-index stacking for titlebar, sidebar, and main
- */
-
 import { type ReactNode } from "react";
 import { GlassBackground, type GlassBackgroundProps } from "./GlassBackground";
-import FluidBackground from "../../components/FluidBackground";
 
 export interface GlassLayoutProps {
   children?: ReactNode;
@@ -34,17 +23,14 @@ export function GlassLayout({
         isolation: "isolate",
       }}
     >
-      {/* Depth layer 0: fluid background (Canvas) */}
-      <FluidBackground preset="auto" intensity={0.6} />
-
-      {/* Depth layer 1: gradient mesh overlay */}
+      {/* FluidBackground is now rendered in AppContent with proper enabled control */}
       <GlassBackground {...background} />
 
-      {/* Depth layer 2+: content shell */}
-      <div
-        className={"app-root" + (className ? " " + className : "")}
-      >
-        {children}
+      {/* Depth layer 2+: content shell with split backdrop/clip layers */}
+      <div className={"app-root-backdrop" + (className ? " " + className : "")}>
+        <div className="app-root">
+          {children}
+        </div>
       </div>
     </div>
   );

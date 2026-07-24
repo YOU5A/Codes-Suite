@@ -102,7 +102,7 @@ export default function Sidebar({ currentPage, onNavigate }: SidebarProps) {
           textAlign: "center",
         }}
       >
-        {"Codes Suite V" + APP_VERSION}
+        {"CodeXa Studio V" + APP_VERSION}
       </div>
     </GlassSurface>
   );

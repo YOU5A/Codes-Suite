@@ -1,5 +1,5 @@
-﻿"""
-Codes Suite - Python Bridge Server
+"""
+CodeXa Studio - Python Bridge Server
 JSON-RPC over stdin/stdout. Imports business logic from three existing tools.
 """
 
@@ -83,7 +83,7 @@ def _get_w32_backup_manager():
 # --- Bridge-layer music state ---
 
 # --- Backup directory ---
-BACKUP_DIR = r"C:\CodesSuite\backups"
+BACKUP_DIR = r"C:\CodeXaStudio\backups"
 
 def _ensure_dir(path):
     """Lazily create directory only when actually needed (write operations)."""
@@ -143,7 +143,7 @@ def handle_registry_write(params):
     if value is None:
         return {"error": "Missing 'value' parameter"}
     if not _get_w32().AdminChecker.is_admin():
-        return {"error": "Administrator privileges required. Please restart Codes Suite as Administrator."}
+        return {"error": "Administrator privileges required. Please restart CodeXa Studio as Administrator."}
     success = _get_w32().RegistryManager.write_value(int(value))
     if success:
         return handle_registry_read({})
@@ -216,7 +216,7 @@ def handle_backup_restore(params):
         _get_w32().RegistryManager.backup_value(current, BACKUP_DIR)
     # Write the restored value
     if not _get_w32().AdminChecker.is_admin():
-        return {"error": "Administrator privileges required. Please restart Codes Suite as Administrator."}
+        return {"error": "Administrator privileges required. Please restart CodeXa Studio as Administrator."}
     success = _get_w32().RegistryManager.write_value(decimal_value)
     if success:
         return {"success": True, "value": decimal_value}
@@ -247,7 +247,7 @@ def handle_admin_restart(params):
     return {
         "success": False,
         "requires_admin": True,
-        "message": "Administrator privileges required. Please restart Codes Suite as administrator."
+        "message": "Administrator privileges required. Please restart CodeXa Studio as Administrator."
     }
 
 def handle_priority_list(params):
@@ -314,7 +314,7 @@ def handle_priority_add(params):
                 _get_app().winreg.SetValueEx(key, "IoPriority", 0, _get_app().winreg.REG_DWORD, int(io_priority))
         return {"success": True}
     except PermissionError:
-        return {"error": "Administrator privileges required. Please restart Codes Suite as Administrator."}
+        return {"error": "Administrator privileges required. Please restart CodeXa Studio as Administrator."}
     except Exception as e:
         return {"error": str(e)}
 
@@ -351,7 +351,7 @@ def handle_priority_delete(params):
             pass
         return {"success": True}
     except PermissionError:
-        return {"error": "Administrator privileges required. Please restart Codes Suite as Administrator."}
+        return {"error": "Administrator privileges required. Please restart CodeXa Studio as Administrator."}
     except Exception as e:
         return {"error": str(e)}
 

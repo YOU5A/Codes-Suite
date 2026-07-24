@@ -16,7 +16,7 @@ const isDev = !app.isPackaged;
 process.env['ELECTRON_DISABLE_SECURITY_WARNINGS'] = 'true';
 
 // Fix GPU cache permission errors by setting a custom cache path
-app.setPath("userData", path.join(app.getPath("appData"), "CodesSuite"));
+app.setPath("userData", path.join(app.getPath("appData"), "CodeXaStudio"));
 
 // ---- Settings file (Electron-side) ----
 const SETTINGS_PATH = path.join(app.getPath("userData"), "electron-settings.json");
@@ -305,7 +305,7 @@ function createTray() {
 
   const contextMenu = Menu.buildFromTemplate([
     {
-      label: "Show Codes Suite",
+      label: "Show CodeXa Studio",
       click: () => showWindow(),
     },
     { type: "separator" },
@@ -318,7 +318,7 @@ function createTray() {
     },
   ]);
 
-  tray.setToolTip("Codes Suite");
+  tray.setToolTip("CodeXa Studio");
   tray.setContextMenu(contextMenu);
 
   // Single-click tray icon to toggle window visibility

@@ -1,4 +1,4 @@
-﻿import React, { createContext, useContext, useState, useCallback, useEffect } from "react";
+import React, { createContext, useContext, useState, useCallback, useEffect } from "react";
 import type { Language } from "@/types";
 
 interface LanguageContextValue {
@@ -17,12 +17,12 @@ export function useLanguage() {
 
 export function LanguageProvider({ children }: { children: React.ReactNode }) {
   const [lang, setLangState] = useState<Language>(() => {
-    return (localStorage.getItem("codes-suite-lang") as Language) || "zh";
+    return (localStorage.getItem("codexa-studio-lang") as Language) || "zh";
   });
 
   const setLang = useCallback((l: Language) => {
     setLangState(l);
-    localStorage.setItem("codes-suite-lang", l);
+    localStorage.setItem("codexa-studio-lang", l);
     window.electronAPI?.python.call("config.set", { language: l });
   }, []);
 

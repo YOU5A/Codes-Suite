@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, lazy, Suspense } from "react";
+import { useState, useEffect, lazy, Suspense } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useTheme, ThemeProvider } from "./hooks/useTheme";
 import { getAnimDuration, EASE_OUT } from "./utils/animations";
@@ -43,7 +43,7 @@ function PageLoader() {
 function AppContent() {
   const { theme, resolvedTheme, settings, setTheme, updateSettings } = useTheme();
   const [currentPage, setCurrentPage] = useState<Page>(() => {
-    return (localStorage.getItem("codes-suite-page") as Page) || "dashboard";
+    return (localStorage.getItem("codexa-studio-page") as Page) || "dashboard";
   });
   const [isMaximized, setIsMaximized] = useState(false);
   const animDuration = getAnimDuration(settings.animationSpeed);
@@ -80,7 +80,7 @@ function AppContent() {
   // Save current page
   const handleNavigate = (page: Page) => {
     setCurrentPage(page);
-    localStorage.setItem("codes-suite-page", page);
+    localStorage.setItem("codexa-studio-page", page);
   };
 
   const pages: Record<Page, React.ReactNode> = {

@@ -1,4 +1,4 @@
-﻿// Shared animation timing and easing for Codes Suite
+// Shared animation timing and easing for CodeXa Studio
 // All components should import from here instead of hardcoding durations.
 
 export type AnimationSpeed = "normal" | "fast" | "off";

@@ -15,8 +15,8 @@ export interface AppSettings {
   theme: Theme;
 }
 
-const SETTINGS_KEY = "codes-suite-settings";
-const THEME_KEY = "codes-suite-theme";
+const SETTINGS_KEY = "codexa-studio-settings";
+const THEME_KEY = "codexa-studio-theme";
 
 export const defaultSettings: AppSettings = {
   windowOpacity: 100,

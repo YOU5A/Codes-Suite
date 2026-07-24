@@ -1,4 +1,4 @@
-﻿/**
+/**
  * GlassModal - Liquid Glass Modal / Dialog
  *
  * Full-screen overlay with centered glass panel.
@@ -71,7 +71,6 @@ export function GlassModal({
             background: "rgba(0,0,0,0.35)",
             backdropFilter: "blur(12px) saturate(180%)",
             WebkitBackdropFilter: "blur(12px) saturate(180%)",
-            borderRadius: "var(--radius)", overflow: "hidden",
           }}
           onClick={disableBackdropClose ? undefined : onClose}
         >
