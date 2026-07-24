@@ -1,8 +1,7 @@
-﻿/**
+/**
  * LyricParser — 多格式歌词解析器
  *
  * 支持: LRC / TTML / QRC / YRC
- * 优先尝试 AMLL lyric parser，否则降级到内置解析。
  *
  * @module lyrics/LyricParser
  */
@@ -54,6 +53,44 @@ function detectSource(raw: string): LyricSource {
   return "unknown";
 }
 
+/**
+ * 间奏检测阈值（秒）。
+ * 两行歌词间隔超过此值时，中间自动插入间奏行，
+ * 用于显示等待点动画（...）。
+ */
+const INTERLUDE_THRESHOLD = 10;
+
+/**
+ * 在歌词行之间自动检测并插入间奏行。
+ * 当两行之间存在较大时间空隙时（如主歌→副歌的乐器过渡），
+ * 插入 isInterlude 行用于渲染等待点动画。
+ */
+function generateInterludes(lines: LyricLine[]): LyricLine[] {
+  if (lines.length < 2) return lines;
+
+  const result: LyricLine[] = [];
+  for (let i = 0; i < lines.length; i++) {
+    result.push(lines[i]);
+
+    if (i < lines.length - 1) {
+      const gap = lines[i + 1].time - lines[i].time;
+      if (gap >= INTERLUDE_THRESHOLD) {
+        // 在当前行 4s 后插入间奏行，给足阅读时间再显示等待点
+        const interludeDelay = 4;
+        const interludeTime = lines[i].time + interludeDelay;
+        result.push({
+          time: interludeTime,
+          text: "",
+          isInterlude: true,
+          duration: gap - interludeDelay,
+        });
+      }
+    }
+  }
+
+  return result;
+}
+
 /** 主解析入口 */
 export function parseLyrics(raw: string): LyricData {
   const source = detectSource(raw);
@@ -73,6 +110,9 @@ export function parseLyrics(raw: string): LyricData {
       lines = parseLRC(raw);
       break;
   }
+
+  // 自动插入间奏行
+  lines = generateInterludes(lines);
 
   return { title: "", artist: "", lines };
 }

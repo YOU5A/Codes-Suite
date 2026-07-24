@@ -7,6 +7,7 @@
 import { useRef, useMemo } from "react";
 import type { LyricData, LyricLine } from "./types";
 import { useLyricScroller } from "./useLyricScroller";
+import InterludeDots from "./InterludeDots";
 
 interface LyricDisplayProps {
   lyricData: LyricData | null;
@@ -98,6 +99,33 @@ export default function LyricDisplay({
         var minOp = isManual ? 0.25 : 0.08;
         var opacity = isCurrent ? 1 : Math.max(minOp, base - dist * 0.11);
 
+        // ── Interlude line: render dots ──
+        if (line.isInterlude) {
+          return (
+            <div
+              key={i}
+              ref={setRowRef(i)}
+              data-lr={i}
+              style={{
+                minHeight: ROW_HEIGHT,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                opacity,
+                transition: "opacity 0.35s ease",
+                pointerEvents: "none",
+              }}
+            >
+              <InterludeDots
+                line={line}
+                currentTime={currentTime}
+                isCurrent={isCurrent}
+              />
+            </div>
+          );
+        }
+
+        // ── Normal lyric line ──
         return (
           <div
             key={i}

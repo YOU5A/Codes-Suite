@@ -1,4 +1,14 @@
-@import "tailwindcss";
+﻿@import "tailwindcss";
+
+/* ??? Global Focus Reset ??? */
+/* Hide Chromium default yellow focus ring */
+*:focus,
+*:focus-visible {
+  outline: none !important;
+}
+
+
+
 
 :root {
   --radius: 20px;

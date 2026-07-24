@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, dialog, shell, Tray, Menu, nativeTheme } = require("electron");
+﻿const { app, BrowserWindow, ipcMain, dialog, shell, Tray, Menu, nativeTheme } = require("electron");
 const fs = require("fs");
 const path = require("path");
 const { execSync, spawnSync } = require("child_process");
@@ -131,6 +131,9 @@ function createWindow() {
   if (isDev) {
     mainWindow.loadURL("http://localhost:5173");
     mainWindow.webContents.openDevTools({ mode: "detach" });
+
+  // Hide Chromium default yellow focus ring early
+  mainWindow.webContents.insertCSS("*:focus, *:focus-visible { outline: none !important; }");
   } else {
     mainWindow.loadFile(path.join(__dirname, "..", "dist", "index.html"));
   }
